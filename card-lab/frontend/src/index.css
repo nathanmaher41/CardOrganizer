@@ -3,7 +3,7 @@
 @import 'tailwindcss/utilities';
 
 body {
-  @apply bg-gradient-to-br from-red-500 to-purple-600 min-h-screen;
+  @apply bg-gradient-to-br from-brand-1 to-brand-2 min-h-screen;
 }
 
 

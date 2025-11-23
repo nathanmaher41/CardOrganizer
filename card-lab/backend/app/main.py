@@ -1,7 +1,12 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+# app/main.py
 from typing import List
+
+from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from sqlmodel import Session, select
+
+from .database import init_db, get_session
+from .models import Card, CardCreate, CardRead
 
 app = FastAPI(
     title="Card Lab API",
@@ -9,7 +14,8 @@ app = FastAPI(
     description="Backend for your custom card game lab.",
 )
 
-# Allow Vite dev server
+# --- CORS so Vite frontend can talk to this API ---
+
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
@@ -23,67 +29,58 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ----- Models (Pydantic) -----
 
-class Card(BaseModel):
-    id: int
-    name: str
-    cost: int
-    fi: int
-    hp: int
-    type: str  # god, creature, spell, enchantment
-    pantheon: str | None = None
-    archetype: str | None = None
-    # later: abilities, tags, text, etc.
+# --- Startup: create tables ---
 
-class CardCreate(BaseModel):
-    name: str
-    cost: int
-    fi: int
-    hp: int
-    type: str
-    pantheon: str | None = None
-    archetype: str | None = None
+@app.on_event("startup")
+def on_startup():
+    init_db()
 
 
-# ----- In-memory "DB" for now -----
-
-_cards: list[Card] = []
-_next_id: int = 1
-
+# --- Health check ---
 
 @app.get("/health", tags=["system"])
 def health_check():
     return {"status": "ok"}
 
 
-@app.get("/cards", response_model=List[Card], tags=["cards"])
-def list_cards():
-    return _cards
+# --- Card endpoints ---
+
+@app.get("/cards", response_model=List[CardRead], tags=["cards"])
+def list_cards(session: Session = Depends(get_session)):
+    """
+    Return all cards.
+    """
+    statement = select(Card).order_by(Card.id)
+    results = session.exec(statement)
+    return results.all()
 
 
-@app.post("/cards", response_model=Card, tags=["cards"])
-def create_card(card: CardCreate):
-    global _next_id
-    new = Card(id=_next_id, **card.dict())
-    _cards.append(new)
-    _next_id += 1
-    return new
+@app.post("/cards", response_model=CardRead, tags=["cards"])
+def create_card(card_in: CardCreate, session: Session = Depends(get_session)):
+    """
+    Create a new card.
+    """
+    card = Card.from_orm(card_in)  # copies fields
+    session.add(card)
+    session.commit()
+    session.refresh(card)
+    return card
 
 
-@app.get("/cards/{card_id}", response_model=Card, tags=["cards"])
-def get_card(card_id: int):
-    for c in _cards:
-        if c.id == card_id:
-            return c
-    raise HTTPException(status_code=404, detail="Card not found")
+@app.get("/cards/{card_id}", response_model=CardRead, tags=["cards"])
+def get_card(card_id: int, session: Session = Depends(get_session)):
+    card = session.get(Card, card_id)
+    if not card:
+        raise HTTPException(status_code=404, detail="Card not found")
+    return card
 
 
 @app.delete("/cards/{card_id}", tags=["cards"])
-def delete_card(card_id: int):
-    global _cards
-    before = len(_cards)
-    _cards = [c for c in _cards if c.id != card_id]
-    if len(_cards) == before:
+def delete_card(card_id: int, session: Session = Depends(get_session)):
+    card = session.get(Card, card_id)
+    if not card:
         raise HTTPException(status_code=404, detail="Card not found")
+    session.delete(card)
+    session.commit()
     return {"ok": True}
