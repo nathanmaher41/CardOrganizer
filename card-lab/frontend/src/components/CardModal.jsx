@@ -11,34 +11,49 @@ export default function CardModal({
   onAddPassiveGroup,      // NEW
   onClose,
   onSave,
+  initialCard = null,
 }) {
-  const [name, setName] = useState("");
-  const [cost, setCost] = useState(1);
-  const [fi, setFi] = useState(1);
-  const [hp, setHp] = useState(1);
-  const [godDmg, setGodDmg] = useState(1);
-  const [creatureDmg, setCreatureDmg] = useState(1);
+  const [name, setName] = useState(initialCard?.name ?? "");
+  const [cost, setCost] = useState(initialCard?.cost ?? 1);
+  const [fi, setFi] = useState(initialCard?.fi ?? 1);
+  const [hp, setHp] = useState(initialCard?.hp ?? 1);
+  const [godDmg, setGodDmg] = useState(initialCard?.godDmg ?? 1);
+  const [creatureDmg, setCreatureDmg] = useState(initialCard?.creatureDmg ?? 1);
 
-  const [pantheon, setPantheon] = useState("");
+  const [pantheon, setPantheon] = useState(initialCard?.pantheon ?? "");
   const [newPantheon, setNewPantheon] = useState("");
 
-  const [archetype, setArchetype] = useState("");
+  const [archetype, setArchetype] = useState(initialCard?.archetype ?? "");
   const [newArchetype, setNewArchetype] = useState("");
 
   // Abilities: each has name, timing, text
-  const [abilities, setAbilities] = useState([
-    { id: 1, name: "", timing: "", text: "" },
-  ]);
+  const [abilities, setAbilities] = useState(
+    initialCard?.abilities?.length
+      ? initialCard.abilities.map((a, idx) => ({
+        id: idx + 1,
+        name: a.name ?? "",
+        timing: a.timing ?? "",
+        text: a.text ?? "",
+    }))
+    : [{ id: 1, name: "", timing: "", text: "" }]
+  );
   const [newAbilityTiming, setNewAbilityTiming] = useState("");
 
   // Passives: each has group, name, text
-  const [passives, setPassives] = useState([
-    { id: 1, group: "", name: "", text: "" },
-  ]);
+  const [passives, setPassives] = useState(
+    initialCard?.passives?.length
+      ? initialCard.passives.map((p, idx) => ({
+        id: idx + 1,
+        group: p.group ?? "",
+        name: p.name ?? "",
+        text: p.text ?? "",
+      }))
+      : [{ id: 1, group: "", name: "", text: "" }]
+  );
   const [newPassiveGroup, setNewPassiveGroup] = useState("");
 
   // Tags
-  const [tags, setTags] = useState([]);
+  const [tags, setTags] = useState(initialCard?.tags ?? []);
   const [tagInput, setTagInput] = useState("");
 
   // Derived stat total
@@ -85,7 +100,7 @@ export default function CardModal({
       godDmg: nGod,
       creatureDmg: nCreature,
       statTotal: total,
-      type: "God",
+      type: initialCard?.type ?? "God",
       pantheon: pantheon || null,
       archetype: archetype || null,
       tags,
@@ -202,7 +217,7 @@ export default function CardModal({
       <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl p-5 md:p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-slate-900">
-            Create New God Card
+            {initialCard ? "Edit God Card" : "Create New God Card"}
           </h2>
           <button
             className="text-slate-400 hover:text-red-500 text-xl leading-none"
@@ -565,7 +580,7 @@ export default function CardModal({
               type="submit"
               className="px-4 py-2 rounded-full hover:text-pink-300 bg-gradient-to-r from-brand-1 to-brand-2 text-white text-sm font-medium shadow-md hover:shadow-lg transition"
             >
-              Save Card
+              {initialCard ? "Save Changes" : "Save Card"}
             </button>
           </div>
         </form>

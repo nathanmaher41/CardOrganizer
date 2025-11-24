@@ -1,4 +1,4 @@
-export default function CardPreviewModal({ card, onClose }) {
+export default function CardPreviewModal({ card, onClose, onEdit }) {
   if (!card) return null;
 
   const {
