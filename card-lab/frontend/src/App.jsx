@@ -6,6 +6,7 @@ import CardPreviewModal from "./components/CardPreviewModal";
 import PassiveManager from "./components/PassiveManager";
 import PantheonArchetypeManager from "./components/PantheonArchetypeManager";
 import TagManager from "./components/TagManager";
+import KeywordAbilityManager from "./components/KeywordAbilityManager";
 
 import {
   fetchCards,
@@ -28,6 +29,10 @@ import {
   deleteArchetype,
   fetchTags,
   deleteTag,
+  fetchKeywordAbilities,
+  createKeywordAbility,
+  updateKeywordAbility,
+  deleteKeywordAbility,
 } from "./api";
 
 export default function App() {
@@ -46,6 +51,7 @@ export default function App() {
   const [previewCard, setPreviewCard] = useState(null);
   const [page, setPage] = useState("cards");
   const [passives, setPassives] = useState([]);
+  const [keywordAbilities, setKeywordAbilities] = useState([]);
 
   const pantheons = useMemo(() => pantheonsData.map((p) => p.name), [pantheonsData]);
   const archetypes = useMemo(() => archetypesData.map((a) => a.name), [archetypesData]);
@@ -63,6 +69,7 @@ export default function App() {
         passiveData,
         abilityTimingData,
         tagsDataRes,
+        abilitiesData,
       ] = await Promise.all([
         fetchCards(),
         fetchPantheons(),
@@ -70,6 +77,7 @@ export default function App() {
         fetchPassives(),
         fetchAbilityTimings(),
         fetchTags(),
+        fetchKeywordAbilities(),
       ]);
 
       setCards(cardsData);
@@ -77,6 +85,7 @@ export default function App() {
       setArchetypesData(archetypeData);
       setPassives(passiveData);
       setTagsData(tagsDataRes);
+      setKeywordAbilities(abilitiesData);
       
       const groups = Array.from(new Set(passiveData.map((p) => p.group_name)));
       setPassiveGroups(groups);
@@ -113,6 +122,44 @@ export default function App() {
     } catch (err) {
       console.error(err);
       alert("Error deleting tag: " + err.message);
+    }
+  };
+
+  // ==================== Keyword Ability Management ====================
+  const handleCreateKeywordAbility = async (data) => {
+    try {
+      const newAbility = await createKeywordAbility(data);
+      setKeywordAbilities((prev) => [...prev, newAbility]);
+    } catch (err) {
+      console.error("Error creating keyword ability:", err);
+      alert("Error creating keyword ability: " + err.message);
+    }
+  };
+
+  const handleUpdateKeywordAbility = async (id, data) => {
+    try {
+      const updated = await updateKeywordAbility(id, data);
+      setKeywordAbilities((prev) =>
+        prev.map((a) => (a.id === id ? updated : a))
+      );
+      // Reload cards since they may have been updated by cascade
+      const cardsData = await fetchCards();
+      setCards(cardsData);
+    } catch (err) {
+      console.error("Error updating keyword ability:", err);
+      alert("Error updating keyword ability: " + err.message);
+    }
+  };
+
+  const handleDeleteKeywordAbility = async (id) => {
+    if (!confirm("Delete this keyword ability and all its versions? This cannot be undone.")) return;
+    
+    try {
+      await deleteKeywordAbility(id);
+      setKeywordAbilities((prev) => prev.filter((a) => a.id !== id));
+    } catch (err) {
+      console.error("Error deleting keyword ability:", err);
+      alert("Error deleting keyword ability: " + err.message);
     }
   };
 
@@ -401,6 +448,17 @@ export default function App() {
 
               <button
                 className={`text-sm px-3 py-1.5 rounded-lg border transition ${
+                  page === "abilities"
+                    ? "border-brand-3 text-brand-3 bg-brand-3/5"
+                    : "border-slate-300 hover:border-brand-3 hover:text-brand-3"
+                }`}
+                onClick={() => setPage("abilities")}
+              >
+                Abilities
+              </button>
+
+              <button
+                className={`text-sm px-3 py-1.5 rounded-lg border transition ${
                   page === "pantheons"
                     ? "border-brand-3 text-brand-3 bg-brand-3/5"
                     : "border-slate-300 hover:border-brand-3 hover:text-brand-3"
@@ -472,6 +530,15 @@ export default function App() {
               onCreate={handleCreatePassive}
               onUpdate={handleUpdatePassive}
               onDelete={handleDeletePassive}
+            />
+          )}
+
+          {page === "abilities" && (
+            <KeywordAbilityManager
+              abilities={keywordAbilities}
+              onCreate={handleCreateKeywordAbility}
+              onUpdate={handleUpdateKeywordAbility}
+              onDelete={handleDeleteKeywordAbility}
             />
           )}
 

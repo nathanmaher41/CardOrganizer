@@ -23,6 +23,9 @@ from app.models import (
     CardRead,
     Tag, 
     TagRead,
+    KeywordAbility, 
+    KeywordAbilityCreate,
+    KeywordAbilityRead,
 )
 
 DATABASE_URL = "sqlite:///./cardlab.db"
@@ -1033,3 +1036,366 @@ def delete_tag(tag_id: int, session: Session = Depends(get_session)):
     session.delete(tag)
     session.commit()
     return {"ok": True}
+
+@app.get("/keyword-abilities", response_model=List[KeywordAbilityRead], tags=["keyword-abilities"])
+def list_keyword_abilities(session: Session = Depends(get_session)):
+    """List all CURRENT keyword abilities."""
+    statement = select(KeywordAbility).where(KeywordAbility.is_current == True)
+    return session.exec(statement).all()
+
+
+@app.get("/keyword-abilities/{ability_id}", response_model=KeywordAbilityRead, tags=["keyword-abilities"])
+def get_keyword_ability(ability_id: int, session: Session = Depends(get_session)):
+    """Get the CURRENT version of a keyword ability."""
+    ability = session.get(KeywordAbility, ability_id)
+    if not ability or not ability.is_current:
+        raise HTTPException(status_code=404, detail="Keyword ability not found")
+    return ability
+
+
+@app.post("/keyword-abilities", response_model=KeywordAbilityRead, tags=["keyword-abilities"])
+def create_keyword_ability(
+    ability_in: KeywordAbilityCreate,
+    session: Session = Depends(get_session)
+):
+    """Create a new keyword ability (version 1)."""
+    ability = KeywordAbility(**ability_in.model_dump())
+    ability.is_current = True
+    ability.version = 1
+    ability.parent_ability_id = None
+    
+    session.add(ability)
+    session.commit()
+    session.refresh(ability)
+    return ability
+
+
+@app.put("/keyword-abilities/{ability_id}", response_model=KeywordAbilityRead, tags=["keyword-abilities"])
+def update_keyword_ability(
+    ability_id: int,
+    ability_in: KeywordAbilityCreate,
+    session: Session = Depends(get_session),
+):
+    """
+    Update a keyword ability by creating a new version.
+    Also creates new versions of all cards using this ability (CASCADE).
+    """
+    current_ability = session.get(KeywordAbility, ability_id)
+    if not current_ability or not current_ability.is_current:
+        raise HTTPException(status_code=404, detail="Current keyword ability not found")
+
+    # Mark current ability as non-current
+    current_ability.is_current = False
+    session.add(current_ability)
+
+    # Determine root ability
+    root_ability_id = current_ability.parent_ability_id if current_ability.parent_ability_id else current_ability.id
+    
+    # Find max version for this ability
+    all_ability_versions_stmt = select(KeywordAbility).where(
+        or_(
+            KeywordAbility.id == root_ability_id,
+            KeywordAbility.parent_ability_id == root_ability_id
+        )
+    )
+    all_ability_versions = session.exec(all_ability_versions_stmt).all()
+    max_ability_version = max([v.version for v in all_ability_versions])
+
+    # Create new current ability version
+    new_ability = KeywordAbility(**ability_in.model_dump())
+    new_ability.is_current = True
+    new_ability.version = max_ability_version + 1
+    new_ability.parent_ability_id = root_ability_id
+    new_ability.created_at = datetime.utcnow()
+    new_ability.updated_at = datetime.utcnow()
+
+    session.add(new_ability)
+    session.flush()  # Get the new ability ID
+
+    # CASCADE: Find all CURRENT cards that use this ability
+    all_current_cards_stmt = select(Card).where(Card.is_current == True)
+    all_current_cards = session.exec(all_current_cards_stmt).all()
+
+    affected_cards = []
+    for card in all_current_cards:
+        for ability_data in card.cardAbilities:
+            if ability_data.get("ability_id") == root_ability_id:
+                affected_cards.append(card)
+                break
+
+    # Create new versions of affected cards
+    for old_card in affected_cards:
+        # Mark old card as non-current
+        old_card.is_current = False
+        session.add(old_card)
+
+        # Determine root card
+        root_card_id = old_card.parent_card_id if old_card.parent_card_id else old_card.id
+        
+        # Find max version for this card
+        all_card_versions_stmt = select(Card).where(
+            or_(
+                Card.id == root_card_id,
+                Card.parent_card_id == root_card_id
+            )
+        )
+        all_card_versions = session.exec(all_card_versions_stmt).all()
+        max_card_version = max([v.version for v in all_card_versions])
+
+        # Update abilities list with new ability data
+        updated_abilities = []
+        for ability_data in old_card.cardAbilities:
+            if ability_data.get("ability_id") == root_ability_id:
+                updated_abilities.append({
+                    "ability_id": new_ability.id,
+                    "name": new_ability.name,
+                    "text": new_ability.text,
+                })
+            else:
+                updated_abilities.append(ability_data)
+
+        # Create new card version
+        new_card = Card(
+            name=old_card.name,
+            cost=old_card.cost,
+            fi=old_card.fi,
+            hp=old_card.hp,
+            godDmg=old_card.godDmg,
+            creatureDmg=old_card.creatureDmg,
+            dmg=old_card.dmg,
+            speed=old_card.speed,
+            statTotal=old_card.statTotal,
+            type=old_card.type,
+            pantheon=old_card.pantheon,
+            archetype=old_card.archetype,
+            tags=old_card.tags,
+            abilities=old_card.abilities,
+            passives=old_card.passives,
+            cardText=old_card.cardText,
+            cardAbilities=updated_abilities,
+            is_current=True,
+            version=max_card_version + 1,
+            parent_card_id=root_card_id,
+        )
+        session.add(new_card)
+
+    session.commit()
+    session.refresh(new_ability)
+    return new_ability
+
+
+@app.delete("/keyword-abilities/{ability_id}", tags=["keyword-abilities"])
+def delete_keyword_ability(ability_id: int, session: Session = Depends(get_session)):
+    """Delete a keyword ability and all its versions."""
+    ability = session.get(KeywordAbility, ability_id)
+    if not ability:
+        raise HTTPException(status_code=404, detail="Keyword ability not found")
+
+    root_id = ability.parent_ability_id if ability.parent_ability_id else ability.id
+    
+    # Delete all versions
+    all_versions_stmt = select(KeywordAbility).where(
+        or_(
+            KeywordAbility.id == root_id,
+            KeywordAbility.parent_ability_id == root_id
+        )
+    )
+    all_versions = session.exec(all_versions_stmt).all()
+    for version in all_versions:
+        session.delete(version)
+    
+    session.commit()
+    return {"ok": True}
+
+
+@app.get("/keyword-abilities/{ability_id}/versions", response_model=List[KeywordAbilityRead], tags=["keyword-abilities"])
+def get_keyword_ability_versions(ability_id: int, session: Session = Depends(get_session)):
+    """Get all versions of a keyword ability."""
+    ability = session.get(KeywordAbility, ability_id)
+    if not ability:
+        raise HTTPException(status_code=404, detail="Keyword ability not found")
+
+    root_id = ability.parent_ability_id if ability.parent_ability_id else ability.id
+    
+    statement = select(KeywordAbility).where(
+        or_(
+            KeywordAbility.id == root_id,
+            KeywordAbility.parent_ability_id == root_id
+        )
+    ).order_by(KeywordAbility.version.desc())
+    
+    return session.exec(statement).all()
+
+
+@app.post("/keyword-abilities/{ability_id}/versions/{version}/restore", response_model=KeywordAbilityRead, tags=["keyword-abilities"])
+def restore_keyword_ability_version(
+    ability_id: int,
+    version: int,
+    session: Session = Depends(get_session)
+):
+    """
+    Restore a specific version of a keyword ability as current.
+    Also creates new versions of all cards using this ability (CASCADE).
+    """
+    ability = session.get(KeywordAbility, ability_id)
+    if not ability:
+        raise HTTPException(status_code=404, detail="Keyword ability not found")
+
+    root_ability_id = ability.parent_ability_id if ability.parent_ability_id else ability.id
+
+    # Get the version to restore
+    version_stmt = select(KeywordAbility).where(
+        and_(
+            or_(
+                KeywordAbility.id == root_ability_id,
+                KeywordAbility.parent_ability_id == root_ability_id
+            ),
+            KeywordAbility.version == version
+        )
+    )
+    version_to_restore = session.exec(version_stmt).first()
+    if not version_to_restore:
+        raise HTTPException(status_code=404, detail="Version not found")
+
+    # Get current version
+    current_stmt = select(KeywordAbility).where(
+        and_(
+            or_(
+                KeywordAbility.id == root_ability_id,
+                KeywordAbility.parent_ability_id == root_ability_id
+            ),
+            KeywordAbility.is_current == True
+        )
+    )
+    current_ability = session.exec(current_stmt).first()
+
+    # Mark current as non-current
+    if current_ability:
+        current_ability.is_current = False
+        session.add(current_ability)
+
+    # Find max version
+    all_versions_stmt = select(KeywordAbility).where(
+        or_(
+            KeywordAbility.id == root_ability_id,
+            KeywordAbility.parent_ability_id == root_ability_id
+        )
+    )
+    all_versions = session.exec(all_versions_stmt).all()
+    max_version = max([v.version for v in all_versions])
+
+    # Create new current version (copy of restored version)
+    restored_ability = KeywordAbility(
+        name=version_to_restore.name,
+        text=version_to_restore.text,
+        is_current=True,
+        version=max_version + 1,
+        parent_ability_id=root_ability_id,
+    )
+
+    session.add(restored_ability)
+    session.flush()
+
+    # Helper function to resolve an ability reference to its current version
+    def resolve_ability_reference(ability_data):
+        ability_id = ability_data.get("ability_id")
+        if not ability_id:
+            return ability_data
+            
+        old_ability = session.get(KeywordAbility, ability_id)
+        if not old_ability:
+            return ability_data
+            
+        # Find root and get current version
+        root_id = old_ability.parent_ability_id if old_ability.parent_ability_id else old_ability.id
+        
+        # If this is the ability we're restoring, use the restored version
+        if root_id == root_ability_id:
+            return {
+                "ability_id": restored_ability.id,
+                "name": restored_ability.name,
+                "text": restored_ability.text,
+            }
+        
+        # Otherwise, use the current version of this other ability
+        current_other_stmt = select(KeywordAbility).where(
+            and_(
+                or_(
+                    KeywordAbility.id == root_id,
+                    KeywordAbility.parent_ability_id == root_id
+                ),
+                KeywordAbility.is_current == True
+            )
+        )
+        current_other = session.exec(current_other_stmt).first()
+        
+        if current_other:
+            return {
+                "ability_id": current_other.id,
+                "name": current_other.name,
+                "text": current_other.text,
+            }
+        
+        return ability_data
+
+    # CASCADE: Update all current cards using this ability
+    all_current_cards_stmt = select(Card).where(Card.is_current == True)
+    all_current_cards = session.exec(all_current_cards_stmt).all()
+
+    affected_cards = []
+    for card in all_current_cards:
+        for ability_data in card.cardAbilities:
+            if ability_data.get("ability_id"):
+                # Check if this ability links to our root ability
+                check_ability = session.get(KeywordAbility, ability_data.get("ability_id"))
+                if check_ability:
+                    check_root = check_ability.parent_ability_id if check_ability.parent_ability_id else check_ability.id
+                    if check_root == root_ability_id:
+                        affected_cards.append(card)
+                        break
+
+    for old_card in affected_cards:
+        old_card.is_current = False
+        session.add(old_card)
+
+        root_card_id = old_card.parent_card_id if old_card.parent_card_id else old_card.id
+        
+        all_card_versions_stmt = select(Card).where(
+            or_(
+                Card.id == root_card_id,
+                Card.parent_card_id == root_card_id
+            )
+        )
+        all_card_versions = session.exec(all_card_versions_stmt).all()
+        max_card_version = max([v.version for v in all_card_versions])
+
+        # Update ALL ability references to use current versions
+        updated_abilities = [resolve_ability_reference(a) for a in old_card.cardAbilities]
+
+        new_card = Card(
+            name=old_card.name,
+            cost=old_card.cost,
+            fi=old_card.fi,
+            hp=old_card.hp,
+            godDmg=old_card.godDmg,
+            creatureDmg=old_card.creatureDmg,
+            dmg=old_card.dmg,
+            speed=old_card.speed,
+            statTotal=old_card.statTotal,
+            type=old_card.type,
+            pantheon=old_card.pantheon,
+            archetype=old_card.archetype,
+            tags=old_card.tags,
+            abilities=old_card.abilities,
+            passives=old_card.passives,
+            cardText=old_card.cardText,
+            cardAbilities=updated_abilities,
+            is_current=True,
+            version=max_card_version + 1,
+            parent_card_id=root_card_id,
+        )
+        session.add(new_card)
+
+    session.commit()
+    session.refresh(restored_ability)
+    return restored_ability

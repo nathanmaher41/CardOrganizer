@@ -260,3 +260,56 @@ export async function deleteTag(tagId) {
     method: "DELETE",
   });
 }
+
+export async function fetchKeywordAbilities() {
+  return request("/keyword-abilities");
+}
+
+export async function createKeywordAbility(data) {
+  return request("/keyword-abilities", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateKeywordAbility(id, data) {
+  return request(`/keyword-abilities/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteKeywordAbility(id) {
+  return request(`/keyword-abilities/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function fetchKeywordAbilityVersions(abilityId) {
+  return request(`/keyword-abilities/${abilityId}/versions`);
+}
+
+export async function getKeywordAbilityVersion(abilityId, version) {
+  return request(`/keyword-abilities/${abilityId}/versions/${version}`);
+}
+
+export async function restoreKeywordAbilityVersion(abilityId, version) {
+  return request(`/keyword-abilities/${abilityId}/versions/${version}/restore`, {
+    method: "POST",
+  });
+}
+
+export async function findKeywordAbilityByName(name) {
+  const allAbilities = await fetchKeywordAbilities();
+  return allAbilities.find(
+    (a) => a.name?.toLowerCase() === name?.toLowerCase()
+  ) || null;
+}
+
+export async function getOrCreateKeywordAbility(data) {
+  const existing = await findKeywordAbilityByName(data.name);
+  if (existing) {
+    return existing;
+  }
+  return createKeywordAbility(data);
+}
