@@ -15,10 +15,10 @@ export default function SidebarFilters({
 
   // Stat ranges
   const [costRange, setCostRange] = useState([0, 10]);
-  const [fiRange, setFiRange] = useState([0, 10]);
-  const [hpRange, setHpRange] = useState([0, 10]);
-  const [godDmgRange, setGodDmgRange] = useState([0, 10]);
-  const [creatureDmgRange, setCreatureDmgRange] = useState([0, 10]);
+  const [fiRange, setFiRange] = useState([0, 40]);
+  const [hpRange, setHpRange] = useState([0, 40]);
+  const [godDmgRange, setGodDmgRange] = useState([0, 40]);
+  const [creatureDmgRange, setCreatureDmgRange] = useState([0, 40]);
 
   const [showAdvanced, setShowAdvanced] = useState(false);
 
@@ -65,13 +65,29 @@ export default function SidebarFilters({
     setSelectedArchetypes([]);
     setSelectedTags([]);
     setCostRange([0, 10]);
-    setFiRange([0, 10]);
-    setHpRange([0, 10]);
-    setGodDmgRange([0, 10]);
-    setCreatureDmgRange([0, 10]);
+    setFiRange([0, 40]);
+    setHpRange([0, 40]);
+    setGodDmgRange([0, 40]);
+    setCreatureDmgRange([0, 40]);
     onSearchChange("");
-    onApplyFilters({ search: "", pantheons: [], archetypes: [], tags: [], filterMode: "or" });
-  };
+    onApplyFilters({
+        search: "",
+        pantheons: [],
+        archetypes: [],
+        tags: [],
+        filterMode: "or",
+        minCost: 0,
+        maxCost: 10,
+        minFi: 0,
+        maxFi: 10,
+        minHp: 0,
+        maxHp: 10,
+        minGodDmg: 0,
+        maxGodDmg: 10,
+        minCreatureDmg: 0,
+        maxCreatureDmg: 10,
+    });
+    };
 
   const hasActiveFilters =
     selectedPantheons.length > 0 ||
@@ -212,10 +228,10 @@ export default function SidebarFilters({
       {showAdvanced && (
         <div className="space-y-3 mb-4">
           <RangeSlider label="Cost" min={0} max={10} value={costRange} onChange={setCostRange} />
-          <RangeSlider label="FI" min={0} max={10} value={fiRange} onChange={setFiRange} />
-          <RangeSlider label="HP" min={0} max={10} value={hpRange} onChange={setHpRange} />
-          <RangeSlider label="God Dmg" min={0} max={10} value={godDmgRange} onChange={setGodDmgRange} />
-          <RangeSlider label="Creature Dmg" min={0} max={10} value={creatureDmgRange} onChange={setCreatureDmgRange} />
+          <RangeSlider label="FI" min={0} max={40} value={fiRange} onChange={setFiRange} />
+          <RangeSlider label="HP" min={0} max={40} value={hpRange} onChange={setHpRange} />
+          <RangeSlider label="God Dmg" min={0} max={40} value={godDmgRange} onChange={setGodDmgRange} />
+          <RangeSlider label="Creature Dmg" min={0} max={40} value={creatureDmgRange} onChange={setCreatureDmgRange} />
         </div>
       )}
 

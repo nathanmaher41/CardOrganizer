@@ -257,13 +257,16 @@ export default function App() {
   const handleCreateCard = async (cardData) => {
     try {
       const saved = await createCard(cardData);
-      setCards((prev) => [...prev, saved]);
       setIsCreateModalOpen(false);
       setEditingCard(null);
       
       // Refresh tags
       const tagsDataRes = await fetchTags();
       setTagsData(tagsDataRes);
+      
+      // Refresh cards with current filters
+      const cardsData = await fetchCards(appliedFilters);
+      setCards(cardsData);
     } catch (err) {
       console.error(err);
       alert("Error creating card: " + err.message);
@@ -274,7 +277,6 @@ export default function App() {
     if (!editingCard) return;
     try {
       const updated = await updateCard(editingCard.id, cardData);
-      setCards((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
       setIsCreateModalOpen(false);
       setEditingCard(null);
       setPreviewCard(updated);
@@ -282,6 +284,10 @@ export default function App() {
       // Refresh tags
       const tagsDataRes = await fetchTags();
       setTagsData(tagsDataRes);
+      
+      // Refresh cards with current filters
+      const cardsData = await fetchCards(appliedFilters);
+      setCards(cardsData);
     } catch (err) {
       console.error(err);
       alert("Error updating card: " + err.message);
@@ -292,10 +298,13 @@ export default function App() {
     if (!card?.id) return;
     try {
       await deleteCard(card.id);
-      setCards((prev) => prev.filter((c) => c.id !== card.id));
       setIsCreateModalOpen(false);
       setEditingCard(null);
       setPreviewCard(null);
+      
+      // Refresh cards with current filters
+      const cardsData = await fetchCards(appliedFilters);
+      setCards(cardsData);
     } catch (err) {
       console.error(err);
       alert("Error deleting card: " + err.message);

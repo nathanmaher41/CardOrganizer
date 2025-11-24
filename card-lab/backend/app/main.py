@@ -25,7 +25,7 @@ from app.models import (
     TagRead,
 )
 
-DATABASE_URL = "sqlite:///./card_lab.db"
+DATABASE_URL = "sqlite:///./cardlab.db"
 engine = create_engine(DATABASE_URL, echo=True)
 
 
@@ -87,6 +87,14 @@ def list_cards(
     List all CURRENT cards with optional filters.
     Supports AND/OR filtering with relevance scoring.
     """
+
+    print("\n=== FILTER DEBUG ===")
+    print(f"pantheons param: {pantheons}")
+    print(f"archetypes param: {archetypes}")
+    print(f"tags param: {tags}")
+    print(f"filter_mode: {filter_mode}")
+    print(f"search: {search}")
+
     statement = select(Card).where(Card.is_current == True)
 
     # Legacy single filters (for backwards compatibility)
@@ -128,6 +136,10 @@ def list_cards(
     archetype_list = [a.strip() for a in archetypes.split(",")] if archetypes else []
     tag_list = [t.strip().lower() for t in tags.split(",")] if tags else []
     
+    print(f"\nParsed filters:")
+    print(f"  pantheon_list: {pantheon_list}")
+    print(f"  archetype_list: {archetype_list}")
+    print(f"  tag_list: {tag_list}")
     # Legacy single tag filter
     if tag:
         tag_list.append(tag.lower())
