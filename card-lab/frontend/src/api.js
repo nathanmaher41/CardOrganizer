@@ -37,18 +37,33 @@ async function request(path, options = {}) {
  * Cards
  * ====================== */
 
-/**
- * Fetch cards, optionally filtered.
- * filters = { pantheon, archetype, type, search, tag }
- */
 export async function fetchCards(filters = {}) {
   const params = new URLSearchParams();
 
+  // Legacy single filters
   if (filters.pantheon) params.set("pantheon", filters.pantheon);
   if (filters.archetype) params.set("archetype", filters.archetype);
   if (filters.type) params.set("type", filters.type);
   if (filters.search) params.set("search", filters.search);
   if (filters.tag) params.set("tag", filters.tag);
+
+  // New multi-filters
+  if (filters.pantheons?.length) params.set("pantheons", filters.pantheons.join(","));
+  if (filters.archetypes?.length) params.set("archetypes", filters.archetypes.join(","));
+  if (filters.tags?.length) params.set("tags", filters.tags.join(","));
+  if (filters.filterMode) params.set("filter_mode", filters.filterMode);
+
+  // Stat range filters
+  if (filters.minCost !== undefined) params.set("min_cost", filters.minCost);
+  if (filters.maxCost !== undefined) params.set("max_cost", filters.maxCost);
+  if (filters.minFi !== undefined) params.set("min_fi", filters.minFi);
+  if (filters.maxFi !== undefined) params.set("max_fi", filters.maxFi);
+  if (filters.minHp !== undefined) params.set("min_hp", filters.minHp);
+  if (filters.maxHp !== undefined) params.set("max_hp", filters.maxHp);
+  if (filters.minGodDmg !== undefined) params.set("min_god_dmg", filters.minGodDmg);
+  if (filters.maxGodDmg !== undefined) params.set("max_god_dmg", filters.maxGodDmg);
+  if (filters.minCreatureDmg !== undefined) params.set("min_creature_dmg", filters.minCreatureDmg);
+  if (filters.maxCreatureDmg !== undefined) params.set("max_creature_dmg", filters.maxCreatureDmg);
 
   const qs = params.toString();
   const path = qs ? `/cards?${qs}` : "/cards";
@@ -82,26 +97,7 @@ export async function deleteCard(cardId) {
 
 /* ========================
  * Card versions
- * ====================== */
-
-export async function fetchCardVersions(cardId) {
-  return request(`/cards/${cardId}/versions`);
-}
-
-export async function getCardVersion(cardId, version) {
-  return request(`/cards/${cardId}/versions/${version}`);
-}
-
-/**
- * Restore a previous version: the backend will
- * - update the Card row to match that version
- * - create a new latest version entry
- */
-export async function restoreCardVersion(cardId, version) {
-  return request(`/cards/${cardId}/versions/${version}/restore`, {
-    method: "POST",
-  });
-}
+ * ====================== *
 
 /* ========================
  * Pantheons
@@ -111,13 +107,23 @@ export async function fetchPantheons() {
   return request("/pantheons");
 }
 
-/**
- * data = { name, description? }
- */
 export async function createPantheon(data) {
   return request("/pantheons", {
     method: "POST",
     body: JSON.stringify(data),
+  });
+}
+
+export async function updatePantheon(id, data) {
+  return request(`/pantheons/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deletePantheon(id) {
+  return request(`/pantheons/${id}`, {
+    method: "DELETE",
   });
 }
 
@@ -129,9 +135,6 @@ export async function fetchArchetypes() {
   return request("/archetypes");
 }
 
-/**
- * data = { name, description? }
- */
 export async function createArchetype(data) {
   return request("/archetypes", {
     method: "POST",
@@ -139,82 +142,121 @@ export async function createArchetype(data) {
   });
 }
 
+export async function updateArchetype(id, data) {
+  return request(`/archetypes/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteArchetype(id) {
+  return request(`/archetypes/${id}`, {
+    method: "DELETE",
+  });
+}
+
 /* ========================
  * Passive definitions
  * ====================== */
 
+export async function fetchPassives() {
+  return request("/passives");
+}
 
-/**
- * data = {
- *   group_name,
- *   name,
- *   text,
- *   pantheon?,
- *   archetype?
- * }
- */
-export async function createPassiveDefinition(data) {
+export async function createPassive(data) {
   return request("/passives", {
     method: "POST",
     body: JSON.stringify(data),
   });
 }
 
-export async function fetchAbilityTimings() {
-  const res = await fetch(`${API_BASE}/ability-timings`);
-  if (!res.ok) {
-    throw new Error("Failed to fetch ability timings");
+export async function updatePassive(id, data) {
+  return request(`/passives/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deletePassiveApi(id) {
+  return request(`/passives/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function findPassiveByGroupAndName(groupName, name) {
+  const allPassives = await fetchPassives();
+  return allPassives.find(
+    (p) =>
+      p.group_name?.toLowerCase() === groupName?.toLowerCase() &&
+      p.name?.toLowerCase() === name?.toLowerCase()
+  ) || null;
+}
+
+export async function getOrCreatePassive(data) {
+  const existing = await findPassiveByGroupAndName(data.group_name, data.name);
+  if (existing) {
+    return existing;
   }
-  return res.json(); // [{ id, name }, ...]
+  return createPassive(data);
+}
+
+/* ========================
+ * Ability timings
+ * ====================== */
+
+export async function fetchAbilityTimings() {
+  return request("/ability-timings");
 }
 
 export async function createAbilityTiming(name) {
   const trimmed = name.trim();
   if (!trimmed) return null;
 
-  const res = await fetch(`${API_BASE}/ability-timings`, {
+  return request("/ability-timings", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name: trimmed }),
   });
+}
+/* ========================
+ * Card versions
+ * ====================== */
 
-  if (!res.ok) {
-    throw new Error("Failed to create ability timing");
-  }
-
-  return res.json(); // { id, name }
+export async function fetchCardVersions(cardId) {
+  return request(`/cards/${cardId}/versions`);
 }
 
-export async function fetchPassives() {
-  const res = await fetch(`${API_BASE}/passives`);
-  if (!res.ok) throw new Error("Failed to fetch passives");
-  return res.json();
+export async function getCardVersion(cardId, version) {
+  return request(`/cards/${cardId}/versions/${version}`);
 }
 
-export async function createPassive(data) {
-  const res = await fetch(`${API_BASE}/passives`, {
+export async function restoreCardVersion(cardId, version) {
+  return request(`/cards/${cardId}/versions/${version}/restore`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to create passive");
-  return res.json();
 }
 
-export async function updatePassive(id, data) {
-  const res = await fetch(`${API_BASE}/passives/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) throw new Error("Failed to update passive");
-  return res.json();
+
+// Passive versions
+export async function fetchPassiveVersions(passiveId) {
+  return request(`/passives/${passiveId}/versions`);
 }
 
-export async function deletePassiveApi(id) {
-  const res = await fetch(`${API_BASE}/passives/${id}`, {
+export async function getPassiveVersion(passiveId, version) {
+  return request(`/passives/${passiveId}/versions/${version}`);
+}
+
+export async function restorePassiveVersion(passiveId, version) {
+  return request(`/passives/${passiveId}/versions/${version}/restore`, {
+    method: "POST",
+  });
+}
+
+export async function fetchTags() {
+  return request("/tags");
+}
+
+export async function deleteTag(tagId) {
+  return request(`/tags/${tagId}`, {
     method: "DELETE",
   });
-  if (!res.ok) throw new Error("Failed to delete passive");
-  return res.json();
 }

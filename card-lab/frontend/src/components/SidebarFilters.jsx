@@ -1,68 +1,276 @@
+import { useState, useMemo } from "react";
+
 export default function SidebarFilters({
   searchTerm,
   onSearchChange,
   pantheons,
   archetypes,
-  filterPantheon,
-  filterArchetype,
-  onPantheonFilterChange,
-  onArchetypeFilterChange,
+  tags,
+  onApplyFilters,
 }) {
+  const [filterMode, setFilterMode] = useState("or"); // "and" or "or"
+  const [selectedPantheons, setSelectedPantheons] = useState([]);
+  const [selectedArchetypes, setSelectedArchetypes] = useState([]);
+  const [selectedTags, setSelectedTags] = useState([]);
+
+  // Stat ranges
+  const [costRange, setCostRange] = useState([0, 10]);
+  const [fiRange, setFiRange] = useState([0, 10]);
+  const [hpRange, setHpRange] = useState([0, 10]);
+  const [godDmgRange, setGodDmgRange] = useState([0, 10]);
+  const [creatureDmgRange, setCreatureDmgRange] = useState([0, 10]);
+
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  const togglePantheon = (pantheon) => {
+    setSelectedPantheons((prev) =>
+      prev.includes(pantheon) ? prev.filter((p) => p !== pantheon) : [...prev, pantheon]
+    );
+  };
+
+  const toggleArchetype = (archetype) => {
+    setSelectedArchetypes((prev) =>
+      prev.includes(archetype) ? prev.filter((a) => a !== archetype) : [...prev, archetype]
+    );
+  };
+
+  const toggleTag = (tag) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  };
+
+  const handleApplyFilters = () => {
+    onApplyFilters({
+      search: searchTerm,
+      pantheons: selectedPantheons,
+      archetypes: selectedArchetypes,
+      tags: selectedTags,
+      filterMode,
+      minCost: costRange[0],
+      maxCost: costRange[1],
+      minFi: fiRange[0],
+      maxFi: fiRange[1],
+      minHp: hpRange[0],
+      maxHp: hpRange[1],
+      minGodDmg: godDmgRange[0],
+      maxGodDmg: godDmgRange[1],
+      minCreatureDmg: creatureDmgRange[0],
+      maxCreatureDmg: creatureDmgRange[1],
+    });
+  };
+
+  const handleClearFilters = () => {
+    setSelectedPantheons([]);
+    setSelectedArchetypes([]);
+    setSelectedTags([]);
+    setCostRange([0, 10]);
+    setFiRange([0, 10]);
+    setHpRange([0, 10]);
+    setGodDmgRange([0, 10]);
+    setCreatureDmgRange([0, 10]);
+    onSearchChange("");
+    onApplyFilters({ search: "", pantheons: [], archetypes: [], tags: [], filterMode: "or" });
+  };
+
+  const hasActiveFilters =
+    selectedPantheons.length > 0 ||
+    selectedArchetypes.length > 0 ||
+    selectedTags.length > 0 ||
+    searchTerm ||
+    costRange[0] > 0 ||
+    costRange[1] < 10 ||
+    fiRange[0] > 0 ||
+    fiRange[1] < 10 ||
+    hpRange[0] > 0 ||
+    hpRange[1] < 10 ||
+    godDmgRange[0] > 0 ||
+    godDmgRange[1] < 10 ||
+    creatureDmgRange[0] > 0 ||
+    creatureDmgRange[1] < 10;
+
   return (
-    <aside className="bg-white rounded-xl shadow-sm p-4 space-y-4">
-      <h2 className="text-lg font-semibold text-slate-800">Filters</h2>
-      <div className="h-px bg-slate-200" />
+    <aside className="bg-white rounded-xl shadow-sm p-4 h-fit sticky top-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-semibold text-slate-800">Filters</h3>
+        {hasActiveFilters && (
+          <button
+            className="text-xs text-red-500 hover:text-red-600"
+            onClick={handleClearFilters}
+          >
+            Clear all
+          </button>
+        )}
+      </div>
 
       {/* Search */}
-      <div className="space-y-1">
-        <label className="text-xs font-medium text-slate-500">Search</label>
+      <div className="mb-4">
+        <label className="text-xs font-medium text-slate-600 mb-1.5 block">Search</label>
         <input
-          type="text"
-          placeholder="Search by name..."
-          className="w-full rounded-lg border text-black border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-3/60 focus:border-brand-3"
+          className="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm text-black focus:outline-none focus:ring-2 focus:ring-brand-3/60"
+          placeholder="Card name..."
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
         />
-        
       </div>
 
-      {/* Pantheon filter */}
-      <div className="space-y-1">
-        <label className="text-xs font-medium text-slate-500">Pantheon</label>
-        <select
-          className="w-full text-brand-3 rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-3/60 focus:border-brand-3"
-          value={filterPantheon}
-          onChange={(e) => onPantheonFilterChange(e.target.value)}
-        >
-          <option value="">All pantheons</option>
-          {pantheons.map((p) => (
-            <option key={p} value={p}>
-              {p}
-            </option>
+      {/* Filter Mode Toggle */}
+      <div className="mb-4">
+        <label className="text-xs font-medium text-slate-600 mb-1.5 block">Filter Mode</label>
+        <div className="flex gap-2">
+          <button
+            className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+              filterMode === "or"
+                ? "bg-brand-3 text-white"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            }`}
+            onClick={() => setFilterMode("or")}
+          >
+            OR (Any)
+          </button>
+          <button
+            className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+              filterMode === "and"
+                ? "bg-brand-3 text-white"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            }`}
+            onClick={() => setFilterMode("and")}
+          >
+            AND (All)
+          </button>
+        </div>
+        <p className="text-[10px] text-slate-400 mt-1">
+          {filterMode === "or" ? "Match any selected filter" : "Match all selected filters"}
+        </p>
+      </div>
+
+      {/* Pantheons */}
+      <div className="mb-4">
+        <label className="text-xs font-medium text-slate-600 mb-1.5 block">Pantheons</label>
+        <div className="space-y-1.5">
+          {pantheons.map((pantheon) => (
+            <label key={pantheon} className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                className="rounded border-slate-300 text-brand-3 focus:ring-brand-3"
+                checked={selectedPantheons.includes(pantheon)}
+                onChange={() => togglePantheon(pantheon)}
+              />
+              <span className="text-xs text-slate-700">{pantheon}</span>
+            </label>
           ))}
-        </select>
+        </div>
       </div>
 
-      {/* Archetype filter */}
-      <div className="space-y-1">
-        <label className="text-xs font-medium text-slate-500">Archetype</label>
-        <select
-          className="w-full rounded-lg border text-brand-3 border-slate-300 bg-slate-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-3/60 focus:border-brand-3"
-          value={filterArchetype}
-          onChange={(e) => onArchetypeFilterChange(e.target.value)}
-        >
-          <option value="">All archetypes</option>
-          {archetypes.map((a) => (
-            <option key={a} value={a}>
-              {a}
-            </option>
+      {/* Archetypes */}
+      <div className="mb-4">
+        <label className="text-xs font-medium text-slate-600 mb-1.5 block">Archetypes</label>
+        <div className="space-y-1.5">
+          {archetypes.map((archetype) => (
+            <label key={archetype} className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                className="rounded border-slate-300 text-brand-3 focus:ring-brand-3"
+                checked={selectedArchetypes.includes(archetype)}
+                onChange={() => toggleArchetype(archetype)}
+              />
+              <span className="text-xs text-slate-700">{archetype}</span>
+            </label>
           ))}
-        </select>
+        </div>
       </div>
 
-      <p className="text-[11px] text-slate-400 italic">
-        More filters coming later (cost, FI, HP, tags, etc.).
-      </p>
+      {/* Tags */}
+      {tags.length > 0 && (
+        <div className="mb-4">
+          <label className="text-xs font-medium text-slate-600 mb-1.5 block">Tags</label>
+          <div className="space-y-1.5 max-h-32 overflow-y-auto">
+            {tags.map((tag) => (
+              <label key={tag.id} className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="rounded border-slate-300 text-brand-3 focus:ring-brand-3"
+                  checked={selectedTags.includes(tag.name)}
+                  onChange={() => toggleTag(tag.name)}
+                />
+                <span className="text-xs text-slate-700">{tag.name}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Advanced Stats Toggle */}
+      <button
+        className="w-full mb-3 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-medium text-slate-700 transition"
+        onClick={() => setShowAdvanced(!showAdvanced)}
+      >
+        {showAdvanced ? "Hide" : "Show"} Stat Filters
+      </button>
+
+      {/* Advanced Stat Filters */}
+      {showAdvanced && (
+        <div className="space-y-3 mb-4">
+          <RangeSlider label="Cost" min={0} max={10} value={costRange} onChange={setCostRange} />
+          <RangeSlider label="FI" min={0} max={10} value={fiRange} onChange={setFiRange} />
+          <RangeSlider label="HP" min={0} max={10} value={hpRange} onChange={setHpRange} />
+          <RangeSlider label="God Dmg" min={0} max={10} value={godDmgRange} onChange={setGodDmgRange} />
+          <RangeSlider label="Creature Dmg" min={0} max={10} value={creatureDmgRange} onChange={setCreatureDmgRange} />
+        </div>
+      )}
+
+      {/* Apply Button */}
+      <button
+        className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-brand-1 to-brand-2 text-white text-sm font-medium shadow-md hover:shadow-lg transition"
+        onClick={handleApplyFilters}
+      >
+        Apply Filters
+      </button>
     </aside>
+  );
+}
+
+function RangeSlider({ label, min, max, value, onChange }) {
+  const handleMinChange = (e) => {
+    const newMin = parseInt(e.target.value);
+    if (newMin <= value[1]) {
+      onChange([newMin, value[1]]);
+    }
+  };
+
+  const handleMaxChange = (e) => {
+    const newMax = parseInt(e.target.value);
+    if (newMax >= value[0]) {
+      onChange([value[0], newMax]);
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <label className="text-xs font-medium text-slate-600">{label}</label>
+        <span className="text-xs text-slate-500">
+          {value[0]} - {value[1]}
+        </span>
+      </div>
+      <div className="flex items-center gap-2">
+        <input
+          type="range"
+          min={min}
+          max={max}
+          value={value[0]}
+          onChange={handleMinChange}
+          className="flex-1 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-brand-3"
+        />
+        <input
+          type="range"
+          min={min}
+          max={max}
+          value={value[1]}
+          onChange={handleMaxChange}
+          className="flex-1 h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-brand-3"
+        />
+      </div>
+    </div>
   );
 }
