@@ -143,19 +143,6 @@ export async function createArchetype(data) {
  * Passive definitions
  * ====================== */
 
-/**
- * filters = { pantheon, archetype }
- */
-export async function fetchPassives(filters = {}) {
-  const params = new URLSearchParams();
-  if (filters.pantheon) params.set("pantheon", filters.pantheon);
-  if (filters.archetype) params.set("archetype", filters.archetype);
-
-  const qs = params.toString();
-  const path = qs ? `/passives?${qs}` : "/passives";
-
-  return request(path);
-}
 
 /**
  * data = {
@@ -171,4 +158,63 @@ export async function createPassiveDefinition(data) {
     method: "POST",
     body: JSON.stringify(data),
   });
+}
+
+export async function fetchAbilityTimings() {
+  const res = await fetch(`${API_BASE}/ability-timings`);
+  if (!res.ok) {
+    throw new Error("Failed to fetch ability timings");
+  }
+  return res.json(); // [{ id, name }, ...]
+}
+
+export async function createAbilityTiming(name) {
+  const trimmed = name.trim();
+  if (!trimmed) return null;
+
+  const res = await fetch(`${API_BASE}/ability-timings`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: trimmed }),
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to create ability timing");
+  }
+
+  return res.json(); // { id, name }
+}
+
+export async function fetchPassives() {
+  const res = await fetch(`${API_BASE}/passives`);
+  if (!res.ok) throw new Error("Failed to fetch passives");
+  return res.json();
+}
+
+export async function createPassive(data) {
+  const res = await fetch(`${API_BASE}/passives`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to create passive");
+  return res.json();
+}
+
+export async function updatePassive(id, data) {
+  const res = await fetch(`${API_BASE}/passives/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Failed to update passive");
+  return res.json();
+}
+
+export async function deletePassiveApi(id) {
+  const res = await fetch(`${API_BASE}/passives/${id}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) throw new Error("Failed to delete passive");
+  return res.json();
 }

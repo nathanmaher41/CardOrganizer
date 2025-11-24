@@ -52,6 +52,13 @@ export default function CardPreviewModal({ card, onClose, onEdit }) {
                 {displayType}
               </span>
             </p>
+            {/* NEW: Cost under card type */}
+            <p className="mt-0.5 text-[11px] text-slate-500">
+              Cost:{" "}
+              <span className="font-medium text-slate-700">
+                {cost}
+              </span>
+            </p>
           </div>
 
           <button
@@ -81,12 +88,15 @@ export default function CardPreviewModal({ card, onClose, onEdit }) {
             </button>
           </div>
 
-          <button
-            type="button"
-            className="px-3 py-1 rounded-full border border-slate-300 bg-slate-50 text-[11px] text-slate-600 hover:border-brand-3 hover:text-brand-3"
-          >
-            Edit card
-          </button>
+          {onEdit && (
+            <button
+              type="button"
+              className="px-3 py-1 rounded-full border border-slate-300 bg-slate-50 text-[11px] text-slate-600 hover:border-brand-3 hover:text-brand-3"
+              onClick={onEdit}
+            >
+              Edit card
+            </button>
+          )}
         </div>
 
         {/* Tags - now above stats */}

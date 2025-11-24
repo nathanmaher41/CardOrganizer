@@ -129,3 +129,19 @@ class PassiveDefinitionCreate(PassiveDefinitionBase):
 
 class PassiveDefinitionRead(PassiveDefinitionBase):
     id: int
+
+
+class AbilityTimingBase(SQLModel):
+    name: str
+
+
+class AbilityTiming(AbilityTimingBase, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+
+
+class AbilityTimingCreate(AbilityTimingBase):
+    pass
+
+
+class AbilityTimingRead(AbilityTimingBase):
+    id: int

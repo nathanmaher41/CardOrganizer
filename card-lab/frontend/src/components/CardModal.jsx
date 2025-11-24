@@ -4,13 +4,14 @@ export default function CardModal({
   pantheons,
   archetypes,
   abilityTimings,
-  passiveGroups,          // NEW
+  passiveGroups,
   onAddPantheon,
   onAddArchetype,
   onAddAbilityTiming,
-  onAddPassiveGroup,      // NEW
+  onAddPassiveGroup,
   onClose,
   onSave,
+  onDelete,          // NEW: delete handler from App
   initialCard = null,
 }) {
   const [name, setName] = useState(initialCard?.name ?? "");
@@ -18,7 +19,9 @@ export default function CardModal({
   const [fi, setFi] = useState(initialCard?.fi ?? 1);
   const [hp, setHp] = useState(initialCard?.hp ?? 1);
   const [godDmg, setGodDmg] = useState(initialCard?.godDmg ?? 1);
-  const [creatureDmg, setCreatureDmg] = useState(initialCard?.creatureDmg ?? 1);
+  const [creatureDmg, setCreatureDmg] = useState(
+    initialCard?.creatureDmg ?? 1
+  );
 
   const [pantheon, setPantheon] = useState(initialCard?.pantheon ?? "");
   const [newPantheon, setNewPantheon] = useState("");
@@ -30,12 +33,12 @@ export default function CardModal({
   const [abilities, setAbilities] = useState(
     initialCard?.abilities?.length
       ? initialCard.abilities.map((a, idx) => ({
-        id: idx + 1,
-        name: a.name ?? "",
-        timing: a.timing ?? "",
-        text: a.text ?? "",
-    }))
-    : [{ id: 1, name: "", timing: "", text: "" }]
+          id: idx + 1,
+          name: a.name ?? "",
+          timing: a.timing ?? "",
+          text: a.text ?? "",
+        }))
+      : [{ id: 1, name: "", timing: "", text: "" }]
   );
   const [newAbilityTiming, setNewAbilityTiming] = useState("");
 
@@ -43,11 +46,11 @@ export default function CardModal({
   const [passives, setPassives] = useState(
     initialCard?.passives?.length
       ? initialCard.passives.map((p, idx) => ({
-        id: idx + 1,
-        group: p.group ?? "",
-        name: p.name ?? "",
-        text: p.text ?? "",
-      }))
+          id: idx + 1,
+          group: p.group ?? "",
+          name: p.name ?? "",
+          text: p.text ?? "",
+        }))
       : [{ id: 1, group: "", name: "", text: "" }]
   );
   const [newPassiveGroup, setNewPassiveGroup] = useState("");
@@ -55,6 +58,10 @@ export default function CardModal({
   // Tags
   const [tags, setTags] = useState(initialCard?.tags ?? []);
   const [tagInput, setTagInput] = useState("");
+
+  // Delete confirmation
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [deleteInput, setDeleteInput] = useState("");
 
   // Derived stat total
   const statTotal = useMemo(() => {
@@ -138,9 +145,7 @@ export default function CardModal({
 
   const handleAbilityChange = (id, field, value) => {
     setAbilities((prev) =>
-      prev.map((a) =>
-        a.id === id ? { ...a, [field]: value } : a
-      )
+      prev.map((a) => (a.id === id ? { ...a, [field]: value } : a))
     );
   };
 
@@ -161,9 +166,7 @@ export default function CardModal({
 
   const handlePassiveChange = (id, field, value) => {
     setPassives((prev) =>
-      prev.map((p) =>
-        p.id === id ? { ...p, [field]: value } : p
-      )
+      prev.map((p) => (p.id === id ? { ...p, [field]: value } : p))
     );
   };
 
@@ -212,6 +215,18 @@ export default function CardModal({
     setTags((prev) => prev.filter((t) => t !== tag));
   };
 
+  // --- Delete (edit mode only) ---
+
+  const deleteNameMatches =
+    initialCard &&
+    deleteInput.trim().toLowerCase() ===
+      initialCard.name.trim().toLowerCase();
+
+  const handleConfirmDelete = () => {
+    if (!initialCard || !onDelete || !deleteNameMatches) return;
+    onDelete(initialCard);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
       <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl p-5 md:p-6 max-h-[90vh] overflow-y-auto">
@@ -244,7 +259,7 @@ export default function CardModal({
           {/* Stats + Stat total */}
           <div>
             <div className="grid grid-cols-2 md:grid-cols-6 gap-3 text-black">
-              <StatField label="Cost" value={cost} onChange={setCost}/>
+              <StatField label="Cost" value={cost} onChange={setCost} />
               <StatField label="FI" value={fi} onChange={setFi} />
               <StatField label="HP" value={hp} onChange={setHp} />
               <StatField label="God dmg" value={godDmg} onChange={setGodDmg} />
@@ -256,9 +271,7 @@ export default function CardModal({
             </div>
             <p className="mt-2 text-xs text-slate-500 text-right">
               Stat total:{" "}
-              <span className="font-semibold text-brand-3">
-                {statTotal}
-              </span>
+              <span className="font-semibold text-brand-3">{statTotal}</span>
             </p>
           </div>
 
@@ -367,7 +380,11 @@ export default function CardModal({
                       placeholder="Ability name (e.g. Welcome to Valhalla)"
                       value={ability.name}
                       onChange={(e) =>
-                        handleAbilityChange(ability.id, "name", e.target.value)
+                        handleAbilityChange(
+                          ability.id,
+                          "name",
+                          e.target.value
+                        )
                       }
                     />
 
@@ -376,7 +393,11 @@ export default function CardModal({
                       className="rounded-lg border border-slate-300 bg-slate-50 px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-brand-3/60 focus:border-brand-3"
                       value={ability.timing}
                       onChange={(e) =>
-                        handleAbilityChange(ability.id, "timing", e.target.value)
+                        handleAbilityChange(
+                          ability.id,
+                          "timing",
+                          e.target.value
+                        )
                       }
                     >
                       <option value="">No timing</option>
@@ -393,7 +414,11 @@ export default function CardModal({
                       placeholder="Describe what this ability does..."
                       value={ability.text}
                       onChange={(e) =>
-                        handleAbilityChange(ability.id, "text", e.target.value)
+                        handleAbilityChange(
+                          ability.id,
+                          "text",
+                          e.target.value
+                        )
                       }
                     />
                   </div>
@@ -480,7 +505,11 @@ export default function CardModal({
                         placeholder="Passive name (e.g. Rage after Death)"
                         value={passive.name}
                         onChange={(e) =>
-                          handlePassiveChange(passive.id, "name", e.target.value)
+                          handlePassiveChange(
+                            passive.id,
+                            "name",
+                            e.target.value
+                          )
                         }
                       />
                       <textarea
@@ -488,7 +517,11 @@ export default function CardModal({
                         placeholder="Describe this passive..."
                         value={passive.text}
                         onChange={(e) =>
-                          handlePassiveChange(passive.id, "text", e.target.value)
+                          handlePassiveChange(
+                            passive.id,
+                            "text",
+                            e.target.value
+                          )
                         }
                       />
                     </div>
@@ -567,21 +600,66 @@ export default function CardModal({
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center justify-end gap-2 pt-2">
-            <button
-              type="button"
-              className="px-3 py-1.5 rounded-full text-xs text-slate-300 hover:text-red-500"
-              onClick={onClose}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 rounded-full hover:text-pink-300 bg-gradient-to-r from-brand-1 to-brand-2 text-white text-sm font-medium shadow-md hover:shadow-lg transition"
-            >
-              {initialCard ? "Save Changes" : "Save Card"}
-            </button>
+          {/* Actions + Delete */}
+          <div className="flex items-start justify-between gap-4 pt-3 border-t border-slate-200">
+            {/* Delete area (only when editing and onDelete exists) */}
+            {initialCard && onDelete && (
+              <div className="flex flex-col gap-1 text-xs">
+                {!isConfirmingDelete ? (
+                  <button
+                    type="button"
+                    className="text-red-500 hover:text-red-600"
+                    onClick={() => setIsConfirmingDelete(true)}
+                  >
+                    Delete card
+                  </button>
+                ) : (
+                  <div className="space-y-1">
+                    <p className="text-slate-500">
+                      Type{" "}
+                      <span className="font-semibold">
+                        {initialCard.name}
+                      </span>{" "}
+                      to confirm:
+                    </p>
+                    <input
+                      className="w-full rounded-lg border border-slate-300 bg-slate-50 px-2 py-1 text-xs text-black focus:outline-none focus:ring-2 focus:ring-red-400"
+                      value={deleteInput}
+                      onChange={(e) => setDeleteInput(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleConfirmDelete}
+                      disabled={!deleteNameMatches}
+                      className={`px-3 py-1.5 rounded-lg text-xs text-white ${
+                        deleteNameMatches
+                          ? "bg-red-600 hover:bg-red-700"
+                          : "bg-red-300 cursor-not-allowed"
+                      }`}
+                    >
+                      Confirm delete
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Save / Cancel */}
+            <div className="flex items-center gap-2 ml-auto">
+              <button
+                type="button"
+                className="px-3 py-1.5 rounded-full text-xs text-slate-300 hover:text-red-500"
+                onClick={onClose}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 rounded-full hover:text-pink-300 bg-gradient-to-r from-brand-1 to-brand-2 text-white text-sm font-medium shadow-md hover:shadow-lg transition"
+              >
+                {initialCard ? "Save Changes" : "Save Card"}
+              </button>
+            </div>
           </div>
         </form>
       </div>

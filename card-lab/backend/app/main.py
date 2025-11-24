@@ -1,6 +1,5 @@
 # app/main.py
 from typing import List, Optional
-
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, select
@@ -21,6 +20,9 @@ from .models import (
     PassiveDefinition,
     PassiveDefinitionCreate,
     PassiveDefinitionRead,
+    AbilityTiming,
+    AbilityTimingCreate,
+    AbilityTimingRead,
 )
 
 app = FastAPI(
@@ -337,37 +339,86 @@ def create_archetype(
 # Passive definitions
 # =====================
 
-@app.get(
-    "/passives",
-    response_model=List[PassiveDefinitionRead],
-    tags=["passives"],
-)
-def list_passives(
-    pantheon: Optional[str] = None,
-    archetype: Optional[str] = None,
-    session: Session = Depends(get_session),
-):
-    stmt = select(PassiveDefinition)
-    if pantheon:
-        stmt = stmt.where(PassiveDefinition.pantheon == pantheon)
-    if archetype:
-        stmt = stmt.where(PassiveDefinition.archetype == archetype)
-
-    stmt = stmt.order_by(PassiveDefinition.group_name, PassiveDefinition.name)
-    return session.exec(stmt).all()
+@app.get("/passives", response_model=List[PassiveDefinitionRead], tags=["metadata"])
+def list_passives(session: Session = Depends(get_session)):
+    stmt = select(PassiveDefinition).order_by(PassiveDefinition.group_name, PassiveDefinition.name)
+    results = session.exec(stmt)
+    return results.all()
 
 
-@app.post(
-    "/passives",
-    response_model=PassiveDefinitionRead,
-    tags=["passives"],
-)
+@app.post("/passives", response_model=PassiveDefinitionRead, tags=["metadata"])
 def create_passive(
     passive_in: PassiveDefinitionCreate,
     session: Session = Depends(get_session),
 ):
+    # optional: normalize or prevent duplicate (group_name + name)
+    name = passive_in.name.strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Name cannot be empty.")
+
     passive = PassiveDefinition.from_orm(passive_in)
     session.add(passive)
     session.commit()
     session.refresh(passive)
     return passive
+
+@app.get("/ability-timings", response_model=List[AbilityTimingRead], tags=["metadata"])
+def list_ability_timings(session: Session = Depends(get_session)):
+  stmt = select(AbilityTiming).order_by(AbilityTiming.name)
+  results = session.exec(stmt)
+  return results.all()
+
+
+@app.post("/ability-timings", response_model=AbilityTimingRead, tags=["metadata"])
+def create_ability_timing(
+  timing_in: AbilityTimingCreate,
+  session: Session = Depends(get_session),
+):
+  name = timing_in.name.strip()
+  if not name:
+    raise HTTPException(status_code=400, detail="Name cannot be empty.")
+
+  # Optional: prevent duplicates (case-insensitive)
+  existing_stmt = select(AbilityTiming).where(
+    AbilityTiming.name.ilike(name)
+  )
+  existing = session.exec(existing_stmt).first()
+  if existing:
+    return existing
+
+  timing = AbilityTiming.from_orm(timing_in)
+  session.add(timing)
+  session.commit()
+  session.refresh(timing)
+  return timing
+
+@app.put("/passives/{passive_id}", response_model=PassiveDefinitionRead, tags=["metadata"])
+def update_passive(
+    passive_id: int,
+    passive_in: PassiveDefinitionCreate,
+    session: Session = Depends(get_session),
+):
+    passive = session.get(PassiveDefinition, passive_id)
+    if not passive:
+        raise HTTPException(status_code=404, detail="Passive not found")
+
+    passive.group_name = passive_in.group_name
+    passive.name = passive_in.name
+    passive.text = passive_in.text
+    passive.pantheon = passive_in.pantheon
+    passive.archetype = passive_in.archetype
+
+    session.add(passive)
+    session.commit()
+    session.refresh(passive)
+    return passive
+
+@app.delete("/passives/{passive_id}", tags=["metadata"])
+def delete_passive(passive_id: int, session: Session = Depends(get_session)):
+    passive = session.get(PassiveDefinition, passive_id)
+    if not passive:
+        raise HTTPException(status_code=404, detail="Passive not found")
+
+    session.delete(passive)
+    session.commit()
+    return {"ok": True}
