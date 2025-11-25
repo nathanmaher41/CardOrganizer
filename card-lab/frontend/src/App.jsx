@@ -50,12 +50,36 @@ export default function App() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingCard, setEditingCard] = useState(null);
   const [previewCard, setPreviewCard] = useState(null);
-  const [page, setPage] = useState("cards");
+  
+  // Initialize page from URL hash, default to "cards"
+  const [page, setPage] = useState(() => {
+    const hash = window.location.hash.slice(1); // Remove the '#'
+    return hash || "cards";
+  });
+  
   const [passives, setPassives] = useState([]);
   const [keywordAbilities, setKeywordAbilities] = useState([]);
 
   const pantheons = useMemo(() => pantheonsData.map((p) => p.name), [pantheonsData]);
   const archetypes = useMemo(() => archetypesData.map((a) => a.name), [archetypesData]);
+
+  // Update URL hash when page changes
+  useEffect(() => {
+    window.location.hash = page;
+  }, [page]);
+
+  // Listen for hash changes (browser back/forward buttons)
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.slice(1);
+      if (hash) {
+        setPage(hash);
+      }
+    };
+
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
 
   useEffect(() => {
     loadInitialData();

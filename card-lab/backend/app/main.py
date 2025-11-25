@@ -1414,7 +1414,9 @@ def restore_keyword_ability_version(
 
 # ==================== LOCATION ENDPOINTS ====================
 
-@app.post("/api/locations", response_model=Location)
+# ==================== LOCATION ENDPOINTS ====================
+
+@app.post("/locations", response_model=Location)
 def create_location(location: Location, session: Session = Depends(get_session)):
     """Create a new location"""
     session.add(location)
@@ -1422,7 +1424,7 @@ def create_location(location: Location, session: Session = Depends(get_session))
     session.refresh(location)
     return location
 
-@app.get("/api/locations", response_model=List[Location])
+@app.get("/locations", response_model=List[Location])
 def list_locations(
     search: Optional[str] = Query(None, description="Search by name"),
     pantheons: Optional[str] = Query(None, description="Comma-separated pantheons"),
@@ -1450,7 +1452,7 @@ def list_locations(
     
     return locations
 
-@app.get("/api/locations/{location_id}", response_model=Location)
+@app.get("/locations/{location_id}", response_model=Location)
 def get_location(location_id: int, session: Session = Depends(get_session)):
     """Get a single location by ID"""
     location = session.get(Location, location_id)
@@ -1458,7 +1460,7 @@ def get_location(location_id: int, session: Session = Depends(get_session)):
         raise HTTPException(status_code=404, detail="Location not found")
     return location
 
-@app.put("/api/locations/{location_id}", response_model=Location)
+@app.put("/locations/{location_id}", response_model=Location)
 def update_location(location_id: int, location_update: Location, session: Session = Depends(get_session)):
     """Update a location"""
     location = session.get(Location, location_id)
@@ -1477,7 +1479,7 @@ def update_location(location_id: int, location_update: Location, session: Sessio
     session.refresh(location)
     return location
 
-@app.delete("/api/locations/{location_id}")
+@app.delete("/locations/{location_id}")
 def delete_location(location_id: int, session: Session = Depends(get_session)):
     """Delete a location"""
     location = session.get(Location, location_id)
@@ -1488,7 +1490,7 @@ def delete_location(location_id: int, session: Session = Depends(get_session)):
     session.commit()
     return {"message": "Location deleted successfully"}
 
-@app.get("/api/locations/metadata/summary")
+@app.get("/locations/metadata/summary")
 def get_locations_metadata(session: Session = Depends(get_session)):
     """Get unique pantheons and archetypes from all locations"""
     locations = session.exec(select(Location)).all()
