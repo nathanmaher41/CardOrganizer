@@ -1518,16 +1518,12 @@ def ping():
     return {"status": "alive"}
 
 @app.get("/health")
-def health_check():
-    """Detailed health check"""
+def health_check(session: Session = Depends(get_session)):
+    """Detailed health check with database connection test"""
     try:
-        from app.database import engine
-        with engine.connect() as conn:
-            conn.execute("SELECT 1")
-        return {
-            "status": "healthy", 
-            "database": "connected",
-            "last_ping": last_ping_time.get("time")
-        }
+        # Simple query to test database connection
+        from sqlalchemy import text
+        session.exec(text("SELECT 1"))
+        return {"status": "healthy", "database": "connected"}
     except Exception as e:
         return {"status": "unhealthy", "error": str(e)}
