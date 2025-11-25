@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends, Query
 from fastapi.middleware.cors import CORSMiddleware
-from sqlmodel import Session, create_engine, SQLModel, select, or_, and_
+from sqlmodel import Session, SQLModel, select, or_, and_
 from contextlib import asynccontextmanager
 from typing import List, Optional
 from datetime import datetime
@@ -21,25 +21,27 @@ from app.models import (
     Card,
     CardCreate,
     CardRead,
-    Tag, 
+    Tag,
     TagRead,
-    KeywordAbility, 
+    KeywordAbility,
     KeywordAbilityCreate,
     KeywordAbilityRead,
-    Location
+    Location,
 )
 
-DATABASE_URL = "sqlite:///./cardlab.db"
-engine = create_engine(DATABASE_URL, echo=True)
+from app.database import init_db, get_session
+
+# DATABASE_URL = "sqlite:///./cardlab.db"
+# engine = create_engine(DATABASE_URL, echo=True)
 
 
-def init_db():
-    SQLModel.metadata.create_all(engine)
+# def init_db():
+#     SQLModel.metadata.create_all(engine)
 
 
-def get_session():
-    with Session(engine) as session:
-        yield session
+# def get_session():
+#     with Session(engine) as session:
+#         yield session
 
 
 @asynccontextmanager
@@ -52,7 +54,11 @@ app = FastAPI(title="Card Lab API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://mythologycards.netlify.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
