@@ -1509,3 +1509,23 @@ def get_locations_metadata(session: Session = Depends(get_session)):
         "pantheons": pantheons,
         "archetypes": archetypes
     }
+
+@app.get("/ping")
+def ping():
+    """Lightweight ping endpoint for uptime monitoring"""
+    return {"status": "alive"}
+
+@app.get("/health")
+def health_check():
+    """Detailed health check"""
+    try:
+        from app.database import engine
+        with engine.connect() as conn:
+            conn.execute("SELECT 1")
+        return {
+            "status": "healthy", 
+            "database": "connected",
+            "last_ping": last_ping_time.get("time")
+        }
+    except Exception as e:
+        return {"status": "unhealthy", "error": str(e)}
