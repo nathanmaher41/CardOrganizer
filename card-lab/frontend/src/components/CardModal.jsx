@@ -360,8 +360,8 @@ export default function CardModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl p-5 md:p-6 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 md:p-4 overflow-y-auto">
+      <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl p-4 md:p-5 lg:p-6 my-4 max-h-[95vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-slate-900">
             {initialCard ? `Edit ${cardType} Card` : "Create New Card"}

@@ -2,10 +2,13 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
-body {
+/* body {
   @apply bg-gradient-to-br from-brand-1 to-brand-2 min-h-screen;
-}
+} */
 
+#root {
+  @apply min-h-screen w-full;
+}
 
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -32,11 +35,17 @@ a:hover {
 }
 
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
+  @apply bg-gradient-to-br from-brand-1 to-brand-2;
+  background-attachment: fixed;
+  background-size: cover;
+  width: 100%;
   min-height: 100vh;
+}
+
+html, body {
+  @apply min-h-screen w-full;
+  margin: 0;
+  padding: 0;
 }
 
 h1 {
@@ -73,5 +82,11 @@ button:focus-visible {
   }
   button {
     background-color: #f9f9f9;
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    background-attachment: scroll;
   }
 }

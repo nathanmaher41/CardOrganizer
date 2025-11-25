@@ -439,197 +439,193 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col py-8 w-full">
-      <div className="w-full px-4">
-        <header className="bg-white/90 backdrop-blur rounded-2xl shadow-lg px-6 py-4 flex items-center justify-between mb-6 w-full">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-brand-1 to-brand-2 shadow-lg" />
-              <h1 className="text-2xl font-semibold text-slate-900">Card Lab</h1>
-            </div>
-
-            <nav className="flex gap-2">
-              <button
-                className={`text-sm px-3 py-1.5 rounded-lg border transition ${
-                  page === "cards"
-                    ? "border-brand-3 text-brand-3 bg-brand-3/5"
-                    : "border-slate-300 hover:border-brand-3 hover:text-brand-3"
-                }`}
-                onClick={() => setPage("cards")}
-              >
-                Cards
-              </button>
-
-              <button
-                className={`text-sm px-3 py-1.5 rounded-lg border transition ${
-                  page === "locations"
-                    ? "border-brand-3 text-brand-3 bg-brand-3/5"
-                    : "border-slate-300 hover:border-brand-3 hover:text-brand-3"
-                }`}
-                onClick={() => setPage("locations")}
-              >
-                Locations
-              </button>
-
-              <button
-                className={`text-sm px-3 py-1.5 rounded-lg border transition ${
-                  page === "passives"
-                    ? "border-brand-3 text-brand-3 bg-brand-3/5"
-                    : "border-slate-300 hover:border-brand-3 hover:text-brand-3"
-                }`}
-                onClick={() => setPage("passives")}
-              >
-                Passives
-              </button>
-
-              <button
-                className={`text-sm px-3 py-1.5 rounded-lg border transition ${
-                  page === "abilities"
-                    ? "border-brand-3 text-brand-3 bg-brand-3/5"
-                    : "border-slate-300 hover:border-brand-3 hover:text-brand-3"
-                }`}
-                onClick={() => setPage("abilities")}
-              >
-                Abilities
-              </button>
-
-              <button
-                className={`text-sm px-3 py-1.5 rounded-lg border transition ${
-                  page === "pantheons"
-                    ? "border-brand-3 text-brand-3 bg-brand-3/5"
-                    : "border-slate-300 hover:border-brand-3 hover:text-brand-3"
-                }`}
-                onClick={() => setPage("pantheons")}
-              >
-                Pantheons & Archetypes
-              </button>
-
-              <button
-                className={`text-sm px-3 py-1.5 rounded-lg border transition ${
-                  page === "tags"
-                    ? "border-brand-3 text-brand-3 bg-brand-3/5"
-                    : "border-slate-300 hover:border-brand-3 hover:text-brand-3"
-                }`}
-                onClick={() => setPage("tags")}
-              >
-                Tags
-              </button>
-            </nav>
+  <div className="min-h-screen w-full flex flex-col py-4 md:py-8">
+    <div className="w-full max-w-[1600px] mx-auto px-3 md:px-4">
+      <header className="bg-white/90 backdrop-blur rounded-2xl shadow-lg px-4 md:px-6 py-3 md:py-4 flex flex-col md:flex-row items-start md:items-center justify-between mb-4 md:mb-6 w-full gap-3">
+        <div className="flex items-center gap-3 md:gap-4">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="h-8 w-8 md:h-10 md:w-10 rounded-2xl bg-gradient-to-br from-brand-1 to-brand-2 shadow-lg flex-shrink-0" />
+            <h1 className="text-xl md:text-2xl font-semibold text-slate-900">Card Lab</h1>
           </div>
-        </header>
+        </div>
 
-        <main className="bg-slate-50/90 backdrop-blur rounded-2xl shadow-lg p-4 md:p-6">
-          {page === "cards" && (
-            <div className="grid grid-cols-1 md:grid-cols-[280px,1fr] gap-4 md:gap-6">
-              <SidebarFilters
-                searchTerm={searchTerm}
-                onSearchChange={setSearchTerm}
-                pantheons={pantheons}
-                archetypes={archetypes}
-                tags={tagsData}
-                onApplyFilters={handleApplyFilters}
-              />
+        <nav className="flex gap-1.5 md:gap-2 flex-wrap w-full md:w-auto">
+          <button
+            className={`text-xs md:text-sm px-2 md:px-3 py-1.5 rounded-lg border transition whitespace-nowrap ${
+              page === "cards"
+                ? "border-brand-3 text-brand-3 bg-brand-3/5"
+                : "border-slate-300 hover:border-brand-3 hover:text-brand-3"
+            }`}
+            onClick={() => setPage("cards")}
+          >
+            Cards
+          </button>
 
-              <section className="bg-white rounded-xl shadow-sm p-4 md:p-6 min-h-[260px] flex flex-col w-full">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
-                  <div>
-                    <h2 className="text-lg font-semibold text-slate-800">Cards</h2>
-                    <p className="text-xs text-slate-500">{cards.length} cards shown</p>
-                  </div>
-                  <button
-                    className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-gradient-to-r from-brand-1 to-brand-2 text-white text-sm font-medium shadow-md hover:shadow-lg transition"
-                    onClick={() => {
-                      setEditingCard(null);
-                      setIsCreateModalOpen(true);
-                    }}
-                  >
-                    + Create Card
-                  </button>
-                </div>
+          <button
+            className={`text-xs md:text-sm px-2 md:px-3 py-1.5 rounded-lg border transition whitespace-nowrap ${
+              page === "locations"
+                ? "border-brand-3 text-brand-3 bg-brand-3/5"
+                : "border-slate-300 hover:border-brand-3 hover:text-brand-3"
+            }`}
+            onClick={() => setPage("locations")}
+          >
+            Locations
+          </button>
 
-                <div className="flex-1 min-h-[200px]">
-                  <CardGrid cards={cards} onCardClick={setPreviewCard} />
-                </div>
-              </section>
-            </div>
-          )}
+          <button
+            className={`text-xs md:text-sm px-2 md:px-3 py-1.5 rounded-lg border transition whitespace-nowrap ${
+              page === "passives"
+                ? "border-brand-3 text-brand-3 bg-brand-3/5"
+                : "border-slate-300 hover:border-brand-3 hover:text-brand-3"
+            }`}
+            onClick={() => setPage("passives")}
+          >
+            Passives
+          </button>
 
-          {page === "locations" && <LocationsTab />}
+          <button
+            className={`text-xs md:text-sm px-2 md:px-3 py-1.5 rounded-lg border transition whitespace-nowrap ${
+              page === "abilities"
+                ? "border-brand-3 text-brand-3 bg-brand-3/5"
+                : "border-slate-300 hover:border-brand-3 hover:text-brand-3"
+            }`}
+            onClick={() => setPage("abilities")}
+          >
+            Abilities
+          </button>
 
-          {page === "passives" && (
-            <PassiveManager
-              passives={passives}
+          <button
+            className={`text-xs md:text-sm px-2 md:px-3 py-1.5 rounded-lg border transition whitespace-nowrap ${
+              page === "pantheons"
+                ? "border-brand-3 text-brand-3 bg-brand-3/5"
+                : "border-slate-300 hover:border-brand-3 hover:text-brand-3"
+            }`}
+            onClick={() => setPage("pantheons")}
+          >
+            Pantheons
+          </button>
+
+          <button
+            className={`text-xs md:text-sm px-2 md:px-3 py-1.5 rounded-lg border transition whitespace-nowrap ${
+              page === "tags"
+                ? "border-brand-3 text-brand-3 bg-brand-3/5"
+                : "border-slate-300 hover:border-brand-3 hover:text-brand-3"
+            }`}
+            onClick={() => setPage("tags")}
+          >
+            Tags
+          </button>
+        </nav>
+      </header>
+
+      <main className="bg-slate-50/90 backdrop-blur rounded-2xl shadow-lg p-3 md:p-4 lg:p-6">
+        {page === "cards" && (
+          <div className="flex flex-col lg:grid lg:grid-cols-[280px,1fr] gap-4 md:gap-6">
+            <SidebarFilters
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
               pantheons={pantheons}
               archetypes={archetypes}
-              onCreate={handleCreatePassive}
-              onUpdate={handleUpdatePassive}
-              onDelete={handleDeletePassive}
+              tags={tagsData}
+              onApplyFilters={handleApplyFilters}
             />
-          )}
 
-          {page === "abilities" && (
-            <KeywordAbilityManager
-              abilities={keywordAbilities}
-              onCreate={handleCreateKeywordAbility}
-              onUpdate={handleUpdateKeywordAbility}
-              onDelete={handleDeleteKeywordAbility}
-            />
-          )}
+            <section className="bg-white rounded-xl shadow-sm p-3 md:p-4 lg:p-6 min-h-[260px] flex flex-col w-full">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+                <div>
+                  <h2 className="text-base md:text-lg font-semibold text-slate-800">Cards</h2>
+                  <p className="text-xs text-slate-500">{cards.length} cards shown</p>
+                </div>
+                <button
+                  className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-gradient-to-r from-brand-1 to-brand-2 text-white text-sm font-medium shadow-md hover:shadow-lg transition w-full sm:w-auto"
+                  onClick={() => {
+                    setEditingCard(null);
+                    setIsCreateModalOpen(true);
+                  }}
+                >
+                  + Create Card
+                </button>
+              </div>
 
-          {page === "pantheons" && (
-            <PantheonArchetypeManager
-              pantheons={pantheonsData}
-              archetypes={archetypesData}
-              onCreatePantheon={handleCreatePantheon}
-              onUpdatePantheon={handleUpdatePantheon}
-              onDeletePantheon={handleDeletePantheon}
-              onCreateArchetype={handleCreateArchetype}
-              onUpdateArchetype={handleUpdateArchetype}
-              onDeleteArchetype={handleDeleteArchetype}
-            />
-          )}
+              <div className="flex-1 min-h-[200px]">
+                <CardGrid cards={cards} onCardClick={setPreviewCard} />
+              </div>
+            </section>
+          </div>
+        )}
 
-          {page === "tags" && (
-            <TagManager tags={tagsData} onDeleteTag={handleDeleteTag} />
-          )}
-        </main>
-      </div>
-
-      {isCreateModalOpen && (
-        <CardModal
-          pantheons={pantheons}
-          archetypes={archetypes}
-          abilityTimings={abilityTimings}
-          passiveGroups={passiveGroups}
-          allPassives={passives}
-          allKeywordAbilities={keywordAbilities}
-          onAddPantheon={handleAddPantheon}
-          onAddArchetype={handleAddArchetype}
-          onAddAbilityTiming={handleAddAbilityTiming}
-          onAddPassiveGroup={handleAddPassiveGroup}
-          onPassiveCreated={handlePassiveCreatedFromCardModal}
-          onPantheonCreated={handlePantheonCreatedFromCardModal}
-          onArchetypeCreated={handleArchetypeCreatedFromCardModal}
-          onClose={() => {
-            setIsCreateModalOpen(false);
-            setEditingCard(null);
-          }}
-          onSave={handleSaveFromModal}
-          onDelete={handleDeleteCard}
-          initialCard={editingCard}
-        />
-      )}
-
-      {previewCard && (
-        <CardPreviewModal
-          card={previewCard}
-          onClose={() => setPreviewCard(null)}
-          onEdit={() => {
-            setEditingCard(previewCard);
-            setIsCreateModalOpen(true);
-          }}
-        />
-      )}
+        {page === "locations" && <LocationsTab />}
+        {page === "passives" && (
+          <PassiveManager
+            passives={passives}
+            pantheons={pantheons}
+            archetypes={archetypes}
+            onCreate={handleCreatePassive}
+            onUpdate={handleUpdatePassive}
+            onDelete={handleDeletePassive}
+          />
+        )}
+        {page === "abilities" && (
+          <KeywordAbilityManager
+            abilities={keywordAbilities}
+            onCreate={handleCreateKeywordAbility}
+            onUpdate={handleUpdateKeywordAbility}
+            onDelete={handleDeleteKeywordAbility}
+          />
+        )}
+        {page === "pantheons" && (
+          <PantheonArchetypeManager
+            pantheons={pantheonsData}
+            archetypes={archetypesData}
+            onCreatePantheon={handleCreatePantheon}
+            onUpdatePantheon={handleUpdatePantheon}
+            onDeletePantheon={handleDeletePantheon}
+            onCreateArchetype={handleCreateArchetype}
+            onUpdateArchetype={handleUpdateArchetype}
+            onDeleteArchetype={handleDeleteArchetype}
+          />
+        )}
+        {page === "tags" && (
+          <TagManager tags={tagsData} onDeleteTag={handleDeleteTag} />
+        )}
+      </main>
     </div>
-  );
+
+    {isCreateModalOpen && (
+      <CardModal
+        pantheons={pantheons}
+        archetypes={archetypes}
+        abilityTimings={abilityTimings}
+        passiveGroups={passiveGroups}
+        allPassives={passives}
+        allKeywordAbilities={keywordAbilities}
+        onAddPantheon={handleAddPantheon}
+        onAddArchetype={handleAddArchetype}
+        onAddAbilityTiming={handleAddAbilityTiming}
+        onAddPassiveGroup={handleAddPassiveGroup}
+        onPassiveCreated={handlePassiveCreatedFromCardModal}
+        onPantheonCreated={handlePantheonCreatedFromCardModal}
+        onArchetypeCreated={handleArchetypeCreatedFromCardModal}
+        onClose={() => {
+          setIsCreateModalOpen(false);
+          setEditingCard(null);
+        }}
+        onSave={handleSaveFromModal}
+        onDelete={handleDeleteCard}
+        initialCard={editingCard}
+      />
+    )}
+
+    {previewCard && (
+      <CardPreviewModal
+        card={previewCard}
+        onClose={() => setPreviewCard(null)}
+        onEdit={() => {
+          setEditingCard(previewCard);
+          setIsCreateModalOpen(true);
+        }}
+      />
+    )}
+  </div>
+);
 }
