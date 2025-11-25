@@ -47,7 +47,7 @@ export default function LocationFilters({
     searchTerm;
 
   return (
-    <aside className="bg-white rounded-xl shadow-sm p-4 h-fit sticky top-4">
+    <aside className="bg-white rounded-xl shadow-sm p-3 md:p-4 h-fit lg:sticky lg:top-4 w-full">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-slate-800">Filters</h3>
         {hasActiveFilters && (

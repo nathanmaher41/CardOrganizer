@@ -1,11 +1,11 @@
 export default function LocationCard({ location, onEdit, onDelete }) {
   return (
-    <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition p-4 border border-slate-200">
+    <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition p-3 md:p-4 border border-slate-200">
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
-        <div className="flex-1">
-          <h3 className="text-lg font-bold text-slate-800 mb-1">{location.name}</h3>
-          <div className="flex gap-2 flex-wrap">
+        <div className="flex-1 min-w-0">
+          <h3 className="text-base md:text-lg font-bold text-slate-800 mb-1 truncate">{location.name}</h3>
+          <div className="flex gap-1 md:gap-2 ml-2 flex-shrink-0">
             {location.pantheon && (
               <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs font-medium">
                 {location.pantheon}
@@ -43,8 +43,8 @@ export default function LocationCard({ location, onEdit, onDelete }) {
       </div>
 
       {/* Card Text */}
-      <div className="bg-slate-50 rounded-lg p-3 mb-3">
-        <p className="text-sm text-slate-700 whitespace-pre-wrap">{location.text}</p>
+      <div className="bg-slate-50 rounded-lg p-2 md:p-3 mb-3">
+        <p className="text-xs md:text-sm text-slate-700 whitespace-pre-wrap break-words">{location.text}</p>
       </div>
 
       {/* Image if present */}
@@ -52,7 +52,7 @@ export default function LocationCard({ location, onEdit, onDelete }) {
         <img
           src={location.image_url}
           alt={location.name}
-          className="w-full h-48 object-cover rounded-lg"
+          className="w-full h-40 md:h-48 object-cover rounded-lg"
         />
       )}
     </div>

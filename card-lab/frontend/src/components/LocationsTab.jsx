@@ -124,9 +124,9 @@ export default function LocationsTab() {
   }
 
   return (
-    <div className="flex gap-6">
+    <div className="flex flex-col lg:flex-row gap-4 md:gap-6">
       {/* Sidebar Filters */}
-      <div className="w-64 flex-shrink-0">
+      <div className="w-full lg:w-64 flex-shrink-0">
         <LocationFilters
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
@@ -137,18 +137,18 @@ export default function LocationsTab() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1">
+      <div className="flex-1 min-w-0">
         {/* Header with Create Button */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-slate-800">Locations</h2>
-            <p className="text-sm text-slate-500 mt-1">
+            <h2 className="text-xl md:text-2xl font-bold text-slate-800">Locations</h2>
+            <p className="text-xs md:text-sm text-slate-500 mt-1">
               {filteredLocations.length} location{filteredLocations.length !== 1 ? "s" : ""}
             </p>
           </div>
           <button
             onClick={() => setIsCreating(!isCreating)}
-            className="px-4 py-2 rounded-lg bg-gradient-to-r from-brand-1 to-brand-2 text-white text-sm font-medium shadow-md hover:shadow-lg transition"
+            className="px-4 py-2 rounded-lg bg-gradient-to-r from-brand-1 to-brand-2 text-white text-sm font-medium shadow-md hover:shadow-lg transition w-full sm:w-auto"
           >
             {isCreating ? "Cancel" : "+ New Location"}
           </button>
@@ -156,8 +156,8 @@ export default function LocationsTab() {
 
         {/* Create/Edit Form */}
         {isCreating && (
-          <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-            <h3 className="text-lg font-semibold text-slate-800 mb-4">
+          <div className="bg-white rounded-xl shadow-sm p-4 md:p-6 mb-4 md:mb-6">
+            <h3 className="text-base md:text-lg font-semibold text-slate-800 mb-4">
               {editingLocation ? "Edit Location" : "Create New Location"}
             </h3>
             <form onSubmit={handleCreateOrUpdate} className="space-y-4">
@@ -187,7 +187,7 @@ export default function LocationsTab() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">
                     Pantheon (optional)
@@ -225,17 +225,17 @@ export default function LocationsTab() {
                 />
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-brand-1 to-brand-2 text-white text-sm font-medium shadow-md hover:shadow-lg transition"
+                  className="w-full sm:w-auto px-4 py-2 rounded-lg bg-gradient-to-r from-brand-1 to-brand-2 text-white text-sm font-medium shadow-md hover:shadow-lg transition"
                 >
                   {editingLocation ? "Update Location" : "Create Location"}
                 </button>
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="px-4 py-2 rounded-lg bg-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-300 transition"
+                  className="w-full sm:w-auto px-4 py-2 rounded-lg bg-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-300 transition"
                 >
                   Cancel
                 </button>
@@ -245,7 +245,7 @@ export default function LocationsTab() {
         )}
 
         {/* Locations Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
           {filteredLocations.map((location) => (
             <LocationCard
               key={location.id}
