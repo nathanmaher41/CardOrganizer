@@ -64,6 +64,8 @@ export async function fetchCards(filters = {}) {
   if (filters.maxGodDmg !== undefined) params.set("max_god_dmg", filters.maxGodDmg);
   if (filters.minCreatureDmg !== undefined) params.set("min_creature_dmg", filters.minCreatureDmg);
   if (filters.maxCreatureDmg !== undefined) params.set("max_creature_dmg", filters.maxCreatureDmg);
+  if (filters.cardTypes?.length) params.set("card_types", filters.cardTypes.join(","));
+  if (filters.spellSpeeds?.length) params.set("spell_speeds", filters.spellSpeeds.join(","));
 
   const qs = params.toString();
   const path = qs ? `/cards?${qs}` : "/cards";
@@ -312,4 +314,53 @@ export async function getOrCreateKeywordAbility(data) {
     return existing;
   }
   return createKeywordAbility(data);
+}
+
+export async function fetchLocations(filters = {}) {
+  const params = new URLSearchParams();
+  
+  if (filters.search) params.set("search", filters.search);
+  if (filters.pantheons?.length) params.set("pantheons", filters.pantheons.join(","));
+  if (filters.archetypes?.length) params.set("archetypes", filters.archetypes.join(","));
+  
+  const queryString = params.toString();
+  const url = queryString ? `${API_BASE}/locations?${queryString}` : `${API_BASE}/locations`;
+  
+  const response = await fetch(url);
+  if (!response.ok) throw new Error("Failed to fetch locations");
+  return response.json();
+}
+
+export async function createLocation(locationData) {
+  const response = await fetch(`${API_BASE}/locations`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(locationData),
+  });
+  if (!response.ok) throw new Error("Failed to create location");
+  return response.json();
+}
+
+export async function updateLocation(id, locationData) {
+  const response = await fetch(`${API_BASE}/locations/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(locationData),
+  });
+  if (!response.ok) throw new Error("Failed to update location");
+  return response.json();
+}
+
+export async function deleteLocation(id) {
+  const response = await fetch(`${API_BASE}/locations/${id}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) throw new Error("Failed to delete location");
+  return response.json();
+}
+
+export async function fetchLocationsMetadata() {
+  const response = await fetch(`${API_BASE}/locations/metadata/summary`);
+  if (!response.ok) throw new Error("Failed to fetch locations metadata");
+  return response.json();
 }

@@ -7,6 +7,7 @@ import PassiveManager from "./components/PassiveManager";
 import PantheonArchetypeManager from "./components/PantheonArchetypeManager";
 import TagManager from "./components/TagManager";
 import KeywordAbilityManager from "./components/KeyWordAbilityManager";
+import LocationsTab from "./components/LocationsTab";
 
 import {
   fetchCards,
@@ -437,6 +438,17 @@ export default function App() {
 
               <button
                 className={`text-sm px-3 py-1.5 rounded-lg border transition ${
+                  page === "locations"
+                    ? "border-brand-3 text-brand-3 bg-brand-3/5"
+                    : "border-slate-300 hover:border-brand-3 hover:text-brand-3"
+                }`}
+                onClick={() => setPage("locations")}
+              >
+                Locations
+              </button>
+
+              <button
+                className={`text-sm px-3 py-1.5 rounded-lg border transition ${
                   page === "passives"
                     ? "border-brand-3 text-brand-3 bg-brand-3/5"
                     : "border-slate-300 hover:border-brand-3 hover:text-brand-3"
@@ -480,10 +492,6 @@ export default function App() {
               </button>
             </nav>
           </div>
-
-          <div className="text-xs text-slate-500">
-            Gods only for now – spells/creatures later
-          </div>
         </header>
 
         <main className="bg-slate-50/90 backdrop-blur rounded-2xl shadow-lg p-4 md:p-6">
@@ -521,6 +529,8 @@ export default function App() {
               </section>
             </div>
           )}
+
+          {page === "locations" && <LocationsTab />}
 
           {page === "passives" && (
             <PassiveManager

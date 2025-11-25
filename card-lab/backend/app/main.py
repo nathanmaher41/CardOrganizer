@@ -26,6 +26,7 @@ from app.models import (
     KeywordAbility, 
     KeywordAbilityCreate,
     KeywordAbilityRead,
+    Location
 )
 
 DATABASE_URL = "sqlite:///./cardlab.db"
@@ -84,6 +85,8 @@ def list_cards(
     max_god_dmg: Optional[int] = None,
     min_creature_dmg: Optional[int] = None,
     max_creature_dmg: Optional[int] = None,
+    card_types: Optional[str] = Query(None, description="Comma-separated card types"),
+    spell_speeds: Optional[str] = Query(None, description="Comma-separated spell speeds"),
     session: Session = Depends(get_session),
 ):
     """
@@ -114,25 +117,34 @@ def list_cards(
 
     # Stat range filters
     if min_cost is not None:
-        cards = [c for c in cards if c.cost >= min_cost]
+        cards = [c for c in cards if c.cost is None or c.cost >= min_cost]
     if max_cost is not None:
-        cards = [c for c in cards if c.cost <= max_cost]
+        cards = [c for c in cards if c.cost is None or c.cost <= max_cost]
     if min_fi is not None:
-        cards = [c for c in cards if c.fi >= min_fi]
+        cards = [c for c in cards if c.fi is None or c.fi >= min_fi]
     if max_fi is not None:
-        cards = [c for c in cards if c.fi <= max_fi]
+        cards = [c for c in cards if c.fi is None or c.fi <= max_fi]
     if min_hp is not None:
-        cards = [c for c in cards if c.hp >= min_hp]
+        cards = [c for c in cards if c.hp is None or c.hp >= min_hp]
     if max_hp is not None:
-        cards = [c for c in cards if c.hp <= max_hp]
+        cards = [c for c in cards if c.hp is None or c.hp <= max_hp]
     if min_god_dmg is not None:
-        cards = [c for c in cards if c.godDmg >= min_god_dmg]
+        cards = [c for c in cards if c.godDmg is None or c.godDmg >= min_god_dmg]
     if max_god_dmg is not None:
-        cards = [c for c in cards if c.godDmg <= max_god_dmg]
+        cards = [c for c in cards if c.godDmg is None or c.godDmg <= max_god_dmg]
     if min_creature_dmg is not None:
-        cards = [c for c in cards if c.creatureDmg >= min_creature_dmg]
+        cards = [c for c in cards if c.creatureDmg is None or c.creatureDmg >= min_creature_dmg]
     if max_creature_dmg is not None:
-        cards = [c for c in cards if c.creatureDmg <= max_creature_dmg]
+        cards = [c for c in cards if c.creatureDmg is None or c.creatureDmg <= max_creature_dmg]
+
+    if card_types:
+        type_list = [t.strip() for t in card_types.split(",")]
+        cards = [c for c in cards if c.type in type_list]
+
+    # Spell speed filtering (only applies to spells)
+    if spell_speeds:
+        speed_list = [s.strip() for s in spell_speeds.split(",")]
+        cards = [c for c in cards if c.type == "Spell" and c.speed in speed_list]
 
     # Advanced multi-filter with AND/OR and relevance scoring
     pantheon_list = [p.strip() for p in pantheons.split(",")] if pantheons else []
@@ -1399,3 +1411,92 @@ def restore_keyword_ability_version(
     session.commit()
     session.refresh(restored_ability)
     return restored_ability
+
+# ==================== LOCATION ENDPOINTS ====================
+
+@app.post("/api/locations", response_model=Location)
+def create_location(location: Location, session: Session = Depends(get_session)):
+    """Create a new location"""
+    session.add(location)
+    session.commit()
+    session.refresh(location)
+    return location
+
+@app.get("/api/locations", response_model=List[Location])
+def list_locations(
+    search: Optional[str] = Query(None, description="Search by name"),
+    pantheons: Optional[str] = Query(None, description="Comma-separated pantheons"),
+    archetypes: Optional[str] = Query(None, description="Comma-separated archetypes"),
+    session: Session = Depends(get_session)
+):
+    """List all locations with optional filters"""
+    query = select(Location)
+    locations = session.exec(query).all()
+    
+    # Apply search filter
+    if search:
+        search_lower = search.lower()
+        locations = [loc for loc in locations if search_lower in loc.name.lower()]
+    
+    # Apply pantheon filter
+    if pantheons:
+        pantheon_list = [p.strip() for p in pantheons.split(",")]
+        locations = [loc for loc in locations if loc.pantheon in pantheon_list]
+    
+    # Apply archetype filter
+    if archetypes:
+        archetype_list = [a.strip() for a in archetypes.split(",")]
+        locations = [loc for loc in locations if loc.archetype in archetype_list]
+    
+    return locations
+
+@app.get("/api/locations/{location_id}", response_model=Location)
+def get_location(location_id: int, session: Session = Depends(get_session)):
+    """Get a single location by ID"""
+    location = session.get(Location, location_id)
+    if not location:
+        raise HTTPException(status_code=404, detail="Location not found")
+    return location
+
+@app.put("/api/locations/{location_id}", response_model=Location)
+def update_location(location_id: int, location_update: Location, session: Session = Depends(get_session)):
+    """Update a location"""
+    location = session.get(Location, location_id)
+    if not location:
+        raise HTTPException(status_code=404, detail="Location not found")
+    
+    location.name = location_update.name
+    location.text = location_update.text
+    location.pantheon = location_update.pantheon
+    location.archetype = location_update.archetype
+    location.image_url = location_update.image_url
+    location.updated_at = datetime.utcnow()
+    
+    session.add(location)
+    session.commit()
+    session.refresh(location)
+    return location
+
+@app.delete("/api/locations/{location_id}")
+def delete_location(location_id: int, session: Session = Depends(get_session)):
+    """Delete a location"""
+    location = session.get(Location, location_id)
+    if not location:
+        raise HTTPException(status_code=404, detail="Location not found")
+    
+    session.delete(location)
+    session.commit()
+    return {"message": "Location deleted successfully"}
+
+@app.get("/api/locations/metadata/summary")
+def get_locations_metadata(session: Session = Depends(get_session)):
+    """Get unique pantheons and archetypes from all locations"""
+    locations = session.exec(select(Location)).all()
+    
+    pantheons = sorted(list(set(loc.pantheon for loc in locations if loc.pantheon)))
+    archetypes = sorted(list(set(loc.archetype for loc in locations if loc.archetype)))
+    
+    return {
+        "pantheons": pantheons,
+        "archetypes": archetypes
+    }

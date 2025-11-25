@@ -12,6 +12,8 @@ export default function SidebarFilters({
   const [selectedPantheons, setSelectedPantheons] = useState([]);
   const [selectedArchetypes, setSelectedArchetypes] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
+  const [selectedCardTypes, setSelectedCardTypes] = useState([]);
+  const [selectedSpellSpeeds, setSelectedSpellSpeeds] = useState([]);
 
   // Stat ranges
   const [costRange, setCostRange] = useState([0, 10]);
@@ -40,12 +42,26 @@ export default function SidebarFilters({
     );
   };
 
+  const toggleCardType = (cardType) => {
+    setSelectedCardTypes((prev) =>
+      prev.includes(cardType) ? prev.filter((t) => t !== cardType) : [...prev, cardType]
+    );
+  };
+
+  const toggleSpellSpeed = (speed) => {
+    setSelectedSpellSpeeds((prev) =>
+      prev.includes(speed) ? prev.filter((s) => s !== speed) : [...prev, speed]
+    );
+  };
+
   const handleApplyFilters = () => {
     onApplyFilters({
       search: searchTerm,
       pantheons: selectedPantheons,
       archetypes: selectedArchetypes,
       tags: selectedTags,
+      cardTypes: selectedCardTypes,
+      spellSpeeds: selectedSpellSpeeds,
       filterMode,
       minCost: costRange[0],
       maxCost: costRange[1],
@@ -64,6 +80,8 @@ export default function SidebarFilters({
     setSelectedPantheons([]);
     setSelectedArchetypes([]);
     setSelectedTags([]);
+    setSelectedCardTypes([]);
+    setSelectedSpellSpeeds([]);
     setCostRange([0, 10]);
     setFiRange([0, 40]);
     setHpRange([0, 40]);
@@ -75,6 +93,8 @@ export default function SidebarFilters({
         pantheons: [],
         archetypes: [],
         tags: [],
+        cardTypes: [],
+        spellSpeeds: [],
         filterMode: "or",
         minCost: 0,
         maxCost: 10,
@@ -87,12 +107,14 @@ export default function SidebarFilters({
         minCreatureDmg: 0,
         maxCreatureDmg: 10,
     });
-    };
+  };
 
   const hasActiveFilters =
     selectedPantheons.length > 0 ||
     selectedArchetypes.length > 0 ||
     selectedTags.length > 0 ||
+    selectedCardTypes.length > 0 ||
+    selectedSpellSpeeds.length > 0 ||
     searchTerm ||
     costRange[0] > 0 ||
     costRange[1] < 10 ||
@@ -159,6 +181,44 @@ export default function SidebarFilters({
           {filterMode === "or" ? "Match any selected filter" : "Match all selected filters"}
         </p>
       </div>
+
+      {/* Card Types */}
+      <div className="mb-4">
+        <label className="text-xs font-medium text-slate-600 mb-1.5 block">Card Types</label>
+        <div className="space-y-1.5">
+          {["God", "Creature", "Weapon", "Armor", "Enchanted Item", "Spell"].map((cardType) => (
+            <label key={cardType} className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                className="rounded border-slate-300 text-brand-3 focus:ring-brand-3"
+                checked={selectedCardTypes.includes(cardType)}
+                onChange={() => toggleCardType(cardType)}
+              />
+              <span className="text-xs text-slate-700">{cardType}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Spell Speeds (only show if Spell is selected) */}
+      {selectedCardTypes.includes("Spell") && (
+        <div className="mb-4">
+          <label className="text-xs font-medium text-slate-600 mb-1.5 block">Spell Speed</label>
+          <div className="space-y-1.5">
+            {["Fast", "Slow", "Instant"].map((speed) => (
+              <label key={speed} className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="rounded border-slate-300 text-brand-3 focus:ring-brand-3"
+                  checked={selectedSpellSpeeds.includes(speed)}
+                  onChange={() => toggleSpellSpeed(speed)}
+                />
+                <span className="text-xs text-slate-700">{speed}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Pantheons */}
       <div className="mb-4">
