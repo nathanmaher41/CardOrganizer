@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import KeywordAbilityModal from "./KeyWordAbilityModal";
+import KeywordAbilityModal from "./KeywordAbilityModal";
 
 export default function KeywordAbilityManager({
   abilities,

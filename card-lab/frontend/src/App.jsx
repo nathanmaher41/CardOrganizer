@@ -6,7 +6,7 @@ import CardPreviewModal from "./components/CardPreviewModal";
 import PassiveManager from "./components/PassiveManager";
 import PantheonArchetypeManager from "./components/PantheonArchetypeManager";
 import TagManager from "./components/TagManager";
-import KeywordAbilityManager from "./components/KeyWordAbilityManager";
+import KeywordAbilityManager from "./components/KeywordAbilityManager";
 import LocationsTab from "./components/LocationsTab";
 
 import {
