@@ -1,3 +1,5 @@
+// CardPreviewModal.jsx - Replace the entire component with this:
+
 import { useState } from "react";
 import CardVersionHistory from "./CardVersionHistory";
 
@@ -6,7 +8,7 @@ export default function CardPreviewModal({ card, onClose, onEdit }) {
 
   const handleVersionRestore = () => {
     setShowVersions(false);
-    window.location.reload(); // Simple way to refresh all data
+    window.location.reload();
   };
 
   return (
@@ -29,15 +31,50 @@ export default function CardPreviewModal({ card, onClose, onEdit }) {
             </button>
           </div>
 
-          {/* Stats grid */}
-          <div className="grid grid-cols-3 gap-2 mb-4">
-            <StatDisplay label="Cost" value={card.cost} />
-            <StatDisplay label="FI" value={card.fi} />
-            <StatDisplay label="HP" value={card.hp} />
-            <StatDisplay label="God dmg" value={card.godDmg} />
-            <StatDisplay label="Creature dmg" value={card.creatureDmg} />
-            <StatDisplay label="Total" value={card.statTotal} highlight />
+          {/* Card Type Badge */}
+          <div className="mb-3">
+            <span className="inline-block px-3 py-1 rounded-full bg-slate-900 text-white text-xs font-semibold">
+              {card.type}
+            </span>
           </div>
+
+          {/* Stats - Conditional based on card type */}
+          {card.type === "God" && (
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              <StatDisplay label="Cost" value={card.cost} />
+              <StatDisplay label="FI" value={card.fi} />
+              <StatDisplay label="HP" value={card.hp} />
+              <StatDisplay label="God dmg" value={card.godDmg} />
+              <StatDisplay label="Creature dmg" value={card.creatureDmg} />
+              <StatDisplay label="Total" value={card.statTotal} highlight />
+            </div>
+          )}
+
+          {card.type === "Creature" && (
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              <StatDisplay label="Cost" value={card.cost} />
+              <StatDisplay label="HP" value={card.hp} />
+              <StatDisplay label="Damage" value={card.dmg} />
+              <StatDisplay label="FI" value={card.fi} />
+              <StatDisplay label="Total" value={card.statTotal} highlight />
+            </div>
+          )}
+
+          {card.type === "Spell" && (
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              <StatDisplay label="Cost" value={card.cost} />
+              <div className="p-2 rounded-lg bg-slate-50 text-center">
+                <p className="text-[10px] text-slate-500 mb-0.5">Speed</p>
+                <p className="text-sm font-semibold text-slate-800">{card.speed || "Fast"}</p>
+              </div>
+            </div>
+          )}
+
+          {["Weapon", "Armor", "Enchanted Item"].includes(card.type) && (
+            <div className="mb-4">
+              <StatDisplay label="Cost" value={card.cost} />
+            </div>
+          )}
 
           {/* Pantheon & Archetype */}
           {(card.pantheon || card.archetype) && (
@@ -71,8 +108,35 @@ export default function CardPreviewModal({ card, onClose, onEdit }) {
             </div>
           )}
 
-          {/* Abilities */}
-          {card.abilities?.length > 0 && (
+          {/* Card Text (for non-God cards) */}
+          {card.type !== "God" && card.cardText && (
+            <div className="mb-4">
+              <p className="text-xs font-medium text-slate-600 mb-2">Card Text</p>
+              <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+                <p className="text-[11px] text-slate-600 leading-relaxed whitespace-pre-wrap">{card.cardText}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Keyword Abilities (for Creatures) */}
+          {card.type === "Creature" && card.cardAbilities?.length > 0 && (
+            <div className="mb-4">
+              <p className="text-xs font-medium text-slate-600 mb-2">Keyword Abilities</p>
+              <div className="space-y-2">
+                {card.cardAbilities.map((ability, idx) => (
+                  <div key={idx} className="p-2.5 rounded-lg bg-purple-50 border border-purple-200">
+                    <p className="text-xs font-semibold text-purple-800 mb-1">{ability.name}</p>
+                    {ability.text && (
+                      <p className="text-[11px] text-purple-700 leading-relaxed">{ability.text}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* God Abilities (only for Gods) */}
+          {card.type === "God" && card.abilities?.length > 0 && (
             <div className="mb-4">
               <p className="text-xs font-medium text-slate-600 mb-2">Abilities</p>
               <div className="space-y-2">
@@ -93,8 +157,8 @@ export default function CardPreviewModal({ card, onClose, onEdit }) {
             </div>
           )}
 
-          {/* Passives */}
-          {card.passives?.length > 0 && (
+          {/* Passives (only for Gods) */}
+          {card.type === "God" && card.passives?.length > 0 && (
             <div className="mb-4">
               <p className="text-xs font-medium text-slate-600 mb-2">Passives</p>
               <div className="space-y-2">
@@ -146,7 +210,7 @@ function StatDisplay({ label, value, highlight = false }) {
   return (
     <div className={`p-2 rounded-lg text-center ${highlight ? "bg-brand-3/10" : "bg-slate-50"}`}>
       <p className="text-[10px] text-slate-500 mb-0.5">{label}</p>
-      <p className={`text-sm font-semibold ${highlight ? "text-brand-3" : "text-slate-800"}`}>{value}</p>
+      <p className={`text-sm font-semibold ${highlight ? "text-brand-3" : "text-slate-800"}`}>{value ?? 0}</p>
     </div>
   );
 }
