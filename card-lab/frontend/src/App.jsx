@@ -6,7 +6,7 @@ import CardPreviewModal from "./components/CardPreviewModal";
 import PassiveManager from "./components/PassiveManager";
 import PantheonArchetypeManager from "./components/PantheonArchetypeManager";
 import TagManager from "./components/TagManager";
-import KeywordAbilityManager from "./components/KeywordAbilityManager";
+import KeywordAbilityManager from "./components/KeyWordAbilityManager";
 
 import {
   fetchCards,
@@ -568,6 +568,7 @@ export default function App() {
           abilityTimings={abilityTimings}
           passiveGroups={passiveGroups}
           allPassives={passives}
+          allKeywordAbilities={keywordAbilities}
           onAddPantheon={handleAddPantheon}
           onAddArchetype={handleAddArchetype}
           onAddAbilityTiming={handleAddAbilityTiming}
