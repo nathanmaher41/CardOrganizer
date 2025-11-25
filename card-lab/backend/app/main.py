@@ -1510,6 +1510,8 @@ def get_locations_metadata(session: Session = Depends(get_session)):
         "archetypes": archetypes
     }
 
+last_ping_time = {"time": None}
+
 @app.get("/ping")
 def ping():
     """Lightweight ping endpoint for uptime monitoring"""
